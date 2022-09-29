@@ -1,0 +1,131 @@
+/// Dark Souls III [appid:374320, dlc:442010]
+# https://www.protondb.com/app/374320
+
+PROTON_NO_ESYNC=1 gamemoderun %command%
+dxvk.conf [gamefile]: "dxgi.syncInterval = 0"
+nvidia-settings: "No force composition pipeline", unchecked:"Sync to VBlank", unchecked:"Allow Flipping", disable:"FXAA"
+%%
+
+
+/// Sekiro: Shadows Die Twice [appid:814380]
+# https://www.protondb.com/app/814380
+
+$ no ultrawide support
+
+gamemoderun %command% -freq 59.95 -fullscreen PROTON_NO_FSYNC=1 %command% WINEDLLOVERRIDES=”dinput8=n,b” %command% WINE_FULLSCREEN_FSR=1
+PROTON_FORCE_LARGE_ADDRESS_AWARE=1 %command%
+WINEFSYNC_SPINCOUNT=2000 %command%
+%%
+
+
+/// Submerged [appid:301860]
+# https://www.protondb.com/app/301860
+
+PROTON_USE_WINED3D11=1 %command%
+PROTON_USE_WINED3D1=1 %command%
+%%
+
+
+/// Elden Ring [appid:1245620]
+# https://www.protondb.com/app/1245620
+# https://github.com/GloriousEggroll/proton-ge-custom/releases/tag/GE-Proton7-23
+# https://github.com/ValveSoftware/Proton/issues/5613
+
+WINE_FULLSCREEN_FSR_MODE=$(ultra, quality, balanced, performance)
+WINE_FULLSCREEN_FSR=1 WINE_FULLSCREEN_FSR_MODE=ultra %command%
+-noEAC
+%%
+
+
+/// A Plague Tale: Innocence [appid:752590]
+# https://www.protondb.com/app/752590
+
+$ freeze after ~15 min
+$ no ultrawide support
+
+DXVK_ASYNC=1 mangohud %command% PROTON_NO_ESYNC=1 %command%
+game-settings: turn-off vsync
+%%
+
+
+/// Rage 2 [appid:548570]
+# https://www.protondb.com/app/548570
+
+$ alt+tab issue at fullscreen
+$ inventory hangs up the whole game making it unplayable
+
+'~/.steam/steam/steamapps/compatdata/548570/pfx/drive_c/users/steamuser/Saved Games/id Software/Rage 2/settings.ini':"AsyncComputeDisable"=1
+%%
+
+
+/// Mortal Shell [appid:1110910, dlc:1672210]
+# https://www.protondb.com/app/1110910
+
+$ motion blur at mouse moves decreases performance
+
+AMD_VULKAN_ICD=RADV %command%
+AMD_VULKAN_ICD=AMDVLK %command%
+-dx12
+%%
+
+
+/// HITMAN 3 [appid:1659040, dlc:1829591]
+# https://www.protondb.com/app/1659040
+
+-skip_launcher
+gamemoderun VKD3D_CONFIG=dxr11 PROTON_CONFIG=dxr11 VKD3D_FEATURE_LEVEL=12_1 PROTON_HIDE_NVIDIA_GPU=0 PROTON_ENABLE_NVAPI=1 %command% -dx12
+proton-tricks/regedit:[HKEY_CURRENT_USER\Software\Wine\X11 Driver]/"UseTakeFocus"=N
+%%
+
+
+/// Styx: Shards of Darkness [appid:355790]
+# https://www.protondb.com/app/355790
+
+PROTON_NO_ESYNC=1 %command%
+%%
+
+
+/// Proton launch arguments
+WINE_FULLSCREEN_FSR=1 WINE_FULLSCREEN_FSR_MODE=ultra %command%
+PROTON_USE_WINED3D=1 %command%
+PROTON_USE_WINED3D11=1 %command%
+PROTON_USE_WINED3D1=1 %command%
+PROTON_NO_FSYNC=1 %command% 
+PROTON_NO_ESYNC=1 gamemoderun %command%
+WINEDLLOVERRIDES=”dinput8=n,b” %command%
+WINEDLLOVERRIDES=”xaudio2_7=n,b”
+AMD_VULKAN_ICD=RADV %command%
+VKD3D_CONFIG=dxr11 %command%
+PROTON_CONFIG=dxr11 %command%
+VKD3D_FEATURE_LEVEL=12_1 %command%
+PROTON_HIDE_NVIDIA_GPU=0 %command%
+PROTON_ENABLE_NVAPI=1 %command%
+DXVK_ASYNC=1 mangohud %command%
+gamemoderun %command%
+PROTON_HEAP_DELAY_FREE=1
+PROTON_ENABLE_NVAPI=1
+PULSE_LATENCY_MSEC=15
+%%
+
+
+/// Steam launch arguments
+# https://help.steampowered.com/en/faqs/view/7D01-D2DD-D75E-2955
+# https://developer.valvesoftware.com/wiki/Console_Command_List
+# https://developer.valvesoftware.com/wiki/Command_Line_Options
+# https://appuals.com/steam-set-launch-options-and-full-list/
+# https://gist.github.com/xPaw/fe7d275d31da14d70481
+
+-freq 59.95 
+-fullscreen
+-skip_launcher
+-skipStartScreen 
+-dx12
+-noEAC
+%%
+
+
+/// Lutris launch arguments
+DXVK_HUD=fps
+%%
+
+

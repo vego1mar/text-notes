@@ -1,0 +1,733 @@
+/// fedora: upgrade
+# https://docs.fedoraproject.org/en-US/quick-docs/dnf-system-upgrade/
+
+sudo dnf upgrade --refresh
+sudo dnf install dnf-plugin-system-upgrade
+sudo dnf system-upgrade download --releasever=36
+sudo dnf system-upgrade reboot
+%%
+
+
+/// dnf: speed up package manager
+echo 'fastestmirror=1' | sudo tee -a /etc/dnf/dnf.conf
+echo 'max_parallel_downloads=10' | sudo tee -a /etc/dnf/dnf.conf
+echo 'keepcache=1' | sudo tee -a /etc/dnf/dnf.conf
+%%
+
+
+/// yum: upgradable packages list
+# https://docs.fedoraproject.org/en-US/Fedora/15/html/Deployment_Guide/sec-Listing_Packages.html
+
+yum list updates
+yum list updates package-name
+yum update
+
+yum list all
+yum list installed "krb?-*"
+yum list available gstreamer\*plugin\*
+yum grouplist
+yum repolist
+%%
+
+/// dnf: upgradable packages list
+sudo dnf distro-sync
+sudo dnf -y upgrade --downloadonly
+
+dnf check-update
+dnf list updates
+sudo dnf update
+sudo dnf update package_name
+
+dnf list
+dnf list available
+dnf list installed
+dnf repolist
+dnf repolist all
+%%
+
+
+/// dnf: install/upgrade package
+# http://docs.fedoraproject.org/en-US/quick-docs/dnf-vs-apt/
+
+dnf search package_name
+dnf info package_name
+dnf provides package_name
+
+dnf install package_name
+dnf install *.rpm
+dnf -y install package --downloadonly --downloaddir=/var/cache/dnf
+dnf --enablerepo=epel install phpmyadmin
+dnf localinstall your_package_name.rpm
+dnf --nogpgcheck localinstall your_package_name.rpm
+dnf reinstall package_name
+
+dnf clean all
+dnf clean dbcache
+dnf clean expire-cache
+dnf clean metadata
+dnf clean packages
+dnf autoremove
+%%
+
+
+/// install flatpak: foliate
+# https://flatpak.org/setup/Fedora
+# https://flathub.org/apps/details/com.github.johnfactotum.Foliate
+
+sudo dnf install flatpak
+sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install com.github.johnfactotum.Foliate
+flatpak list --app
+%%
+
+
+/// install: vivaldi
+# https://computingforgeeks.com/how-to-install-vivaldi-web-browser-on-fedora/
+# https://www.linuxcapable.com/how-to-install-vivaldi-browser-on-fedora-36-linux/
+
+sudo dnf install dnf-utils
+sudo dnf config-manager --add-repo https://repo.vivaldi.com/archive/vivaldi-fedora.repo
+sudo dnf install vivaldi-stable
+
+sudo dnf autoremove vivaldi-stable
+sudo dnf config-manager --set-disable vivaldi
+%%
+
+
+/// dnf: cached packages
+# https://unix.stackexchange.com/questions/225972/how-to-enable-package-caching-in-dnf
+# https://superuser.com/questions/1277412/where-do-packages-installed-with-dnf-get-stored
+
+ls -lshF /var/cache/dnf | less
+ls -lshF /var/cache/PackageKit | less
+find /var/cache/dnf -name '*.rpm'
+
+cat /etc/dnf/dnf.conf
+sudo echo 'keepcache=1' | sudo tee -a /etc/dnf/dnf.conf
+dnf clean packages
+%%
+
+
+/// install gpu: nvidia drivers
+# https://itsfoss.com/install-nvidia-drivers-fedora/
+# https://phoenixnap.com/kb/fedora-nvidia-drivers
+
+sudo dnf update
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+# https://us.download.nvidia.com/XFree86/Linux-x86/367.57/README/supportedchips.html
+lspci -vnn | grep VGA
+sudo dnf install akmod-nvidia                                        # new, GeForce/Quadro/Tesla
+sudo dnf install xorg-x11-drv-nvidia-390xx akmod-nvidia-390xx        # old, GeForce 400/500
+sudo dnf install xorg-x11-drv-nvidia-340xx akmod-nvidia-340xx        # older, GeForce 8/9/200/300
+systemctl reboot
+
+sudo dnf groupupdate multimedia --setop="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
+sudo dnf groupupdate sound-and-video
+%%
+
+
+/// install gpu: nvidia proprietary driver
+# https://phoenixnap.com/kb/fedora-nvidia-drivers
+# https://www.nvidia.com/Download/index.aspx
+
+chmod +x NVIDIA-Linux-x86_64-470.74.run
+sudo dnf update
+sudo dnf install kernel-devel kernel-headers gcc make dkms acpid libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig
+systemctl reboot
+
+sudo nano /etc/modprobe.d/blacklist.conf
+$ blacklist nouveau
+$ options nouveau modeset=0
+
+sudo nano /etc/default/grub
+$ GRUB_CMDLINE_LINUX="rhgb quiet rd.driver.blacklist=nouveau"
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+sudo dnf remove xorg-x11-drv-nouveau
+sudo dracut --force /boot/initramfs-$(uname -r).img $(uname -r)
+
+systemctl set-default multi-user.target
+systemctl reboot
+
+sudo bash NVIDIA-Linux-x86_64-470.74.run
+systemctl set-default graphical.target
+systemctl reboot
+%%
+
+
+/// install: lutris with vulkan
+# https://ask.fedoraproject.org/t/how-to-run-lutris-with-vulkan/961
+
+sudo dnf install xorg-x11-drv-nvidia akmod-nvidia
+sudo dnf install xorg-x11-drv-nvidia-cuda                  # cuda/nvdec/nvenc support
+sudo dnf update -y
+sudo dnf info vulkan-loader                                # vulkan-loader.i686
+sudo dnf install lutris
+sudo dnf install wine
+%%
+
+
+/// install audio: jack
+# https://fedoraproject.org/wiki/JACK_Audio_Connection_Kit
+# JACK operates with special real-time privileges. You must add all JACK users to the jackuser group.
+
+sudo dnf install jack-audio-connection-kit qjackctl 
+cat /proc/asound/cards
+qjackctl
+
+pulseaudio -k
+pactl load-module module-jack-source;pactl load-module module-jack-sink
+%%
+
+
+/// fedora audio: sound info
+# https://fedoraproject.org/wiki/Audio
+
+ps aux | grep -i 'alsa'
+alsa-info.sh --no-upload
+cat /tmp/alsa-info.sh.txt.bXauwcCPdB
+%%
+
+
+/// gpu: info
+# https://www.howtogeek.com/508993/how-to-check-which-gpu-is-installed-on-linux/
+# https://pci-ids.ucw.cz
+
+# Peripheral Component Interconnect — a common protocol to communicate with peripherals
+# The PCI ID Repository maintains a database of all known IDs for PCI devices.
+sudo update-pciids
+lspci -v | grep 'VGA'
+
+sudo dnf install lshw glx-utils
+lshw -numeric -C display
+glxinfo -B | less
+%%
+
+
+/// filesystem: btrfs
+# https://linuxhint.com/install-and-use-btrfs-on-fedora33/
+
+sudo dnf makecache
+sudo dnf install btrfs-progs -y
+
+sudo lsblk
+sudo cfdisk /dev/sdb                             # partitioning
+sudo mkfs.btrfs -L data /dev/sdb1                # formatting with a label 'data'
+
+sudo mkdir -v /data                              # mounting
+sudo mount /dev/sdb1 /data
+df -h
+
+sudo btrfs filesystem show                       # usage information
+sudo btrfs filesystem usage /data                # allocation methods: single, DUP
+sudo btrfs filesystem df /data                   # single: default, DUP: metadata + system data
+sudo btrfs filesystem du /data
+sudo btrfs filesystem du -s /data
+
+sudo btrfs device add /dev/sdb2 /data            # add partition to 'data'
+sudo btrfs device usage /data                    # mounted devices list
+df -h
+
+sudo btrfs filesystem show /data                 # mount btrfs at boot time
+sudo nano /etc/fstab                             # "UUID=${UUID} /data btrfs defaults 0 0"
+systemctl reboot
+%%
+
+
+/// filesystem: btrfs snapshots
+# https://linuxhint.com/use-btrfs-snapshots/
+# https://www.unixmen.com/btrfs-vs-ext4-essentials-benefits-and-disadvantages/
+# https://www.partitionwizard.com/partitionmanager/btrfs-vs-ext4.html
+# https://en.wikipedia.org/wiki/Btrfs
+
+#                       ext4                          btrfs
+# file type             journaling                    copy-on-write
+# multiple devices      no support                    raid-{0, 1, 10, 5, 6}
+# maximum file size     16 TiB                        16 EiB
+# max number of files   2^232                         2^264
+# features              integrity not guaranteed      deduplication, compression, checksum,
+#                                                     snapshots, block sub-allocation (one big block)
+# other                 considered stable,            considered maybe-stable, does fragment, reduces
+#                       does not fragment             metadata overhead, dynamic inode allocation,
+#                                                     optimized SSD support
+
+
+sudo lsblk -e7                                   # prepare btrfs partition
+sudo mkfs.btrfs -L data /dev/sdb1                # btrfs take snapshots of btrfs volumes only
+sudo mkdir -v /data                              # s snapshot may be writable or read-only
+sudo mount /dev/sdb1 /data
+df -h /data
+sudo btrfs subvolume create /data/sv             # create btrfs partition
+ls -lh /data/sv
+
+sudo btrfs subvolume snapshot /data/sv /data/.snapshots/sv-default             # create
+sudo btrfs subvolume snapshot -r /data/sv /data/.snapshots/sv-readonly
+sudo btrfs subvolume list /data                                                # list volumes
+sudo btrfs subvolume show /data/.snapshots/sv-default                          # list files
+tree -a /data
+
+sudo rsync -avz /data/.snapshots/sv-default/ /data/sv                          # update
+sudo cp -v /data/sv/index.html /data/.snapshots/sv-default/index.html
+sudo btrfs subvolume delete /data/.snapshots/sv-default                        # delete
+%%
+
+
+/// shell files: remove directory
+# https://linuxhandbook.com/rmdir-command/
+rmdir empty_directory
+rmdir --ignore-fail-on-non-empty non_empty_directory
+rm -r non_empty_directory
+rmdir -p parent_dir/sub_dir/internal_dir
+rmdir -v directory
+%%
+
+
+/// linux terminal: kill a process
+# https://linuxhandbook.com/kill-process/
+# https://linuxhandbook.com/content/images/2022/04/sigterm-vs-sigkill-tip.webp
+# https://linuxhandbook.com/content/images/2020/06/dont-sigkill.jpeg
+
+ps aux | grep -i 'rainlendar2'                   # obtain process id, e.g. 6388
+kill  -1 6388                                    # SIGHUP (when terminal is being closed)
+kill  -2 6388                                    # SIGINT (when user terminates a process)
+kill  -9 6388                                    # SIGKILL (quit immediately)
+kill -15 6388                                    # SIGTERM (request termination)
+kill -19 6388                                    # SIGSTOP for x86, ARM (may be resumed)
+kill -17 6388                                    # SIGSTOP for Alpha
+kill -23 6388                                    # SIGSTOP fo MIPS
+kill -24 6388                                    # SIGSTOP for PARISC
+%%
+
+
+/// dnf: install rpm with its dependencies
+# https://stackoverflow.com/questions/13876875/how-to-make-rpm-auto-install-dependencies
+
+dnf deplist package
+yum --nogpgcheck localinstall packagename.arch.rpm
+yum install -y --cacheonly --disablerepo=* /var/rpm_dir/*.rpm
+# */
+%%
+
+
+/// dnf repo: unitedrpms
+# unitedrpms.github.io
+
+sudo rpm --import https://raw.githubusercontent.com/UnitedRPMs/unitedrpms/master/URPMS-GPG-PUBLICKEY-Fedora
+sudo dnf -y install https://github.com/UnitedRPMs/unitedrpms/releases/download/20/unitedrpms-$(rpm -E %fedora)-20.fc$(rpm -E %fedora).noarch.rpm
+sudo dnf install xorg-x11-utils hardinfo
+%%
+
+
+/// gimp issue: 'Failed to load module "pk-gtk-module"'
+# https://github.com/mypiaware/virtual-radar-server-installation/issues/6
+
+sudo touch /etc/ld.so.conf.d/gtk3.conf
+echo '/usr/lib64/gtk-3.0/modules' | sudo tee /etc/ld.so.conf.d/gtk3.conf
+sudo ldconfig
+%%
+
+
+/// dnf repo install: docker
+# http://developer.fedoraproject.org/tools/docker/docker-installation.html
+
+sudo dnf install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+sudo dnf install docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+sudo docker run hello-world
+%%
+
+
+/// dnf issue: "file (...) from install of (...) conflicts with file from package (...)"
+# https://www.reddit.com/r/Fedora/comments/6q4yd6/dnf_update_conflicts_that_i_cant_resolve/
+# https://serverfault.com/questions/393579/exclude-a-specific-repo-from-yum-update
+# https://ask.fedoraproject.org/t/dnf-update-error/13603
+# https://tylersguides.com/guides/how-to-remove-a-dnf-or-yum-repository/
+
+sudo dnf remove $(dnf repoquery --duplicates --latest-limit -1 -q)
+sudo dnf upgrade --best --allowerasing
+sudo dnf upgrade --nobest
+sudo dnf upgrade --exclude opencv-*
+
+dnf repoquery --requires opencv-*
+dnf repolist all
+sudo dnf --disablerepo=unitedrpms* upgrade
+
+sudo dnf clean all
+sudo dnf remove --duplicates
+sudo dnf --showduplicates list pipewire pipewire-libs
+
+dnf repolist
+sudo dnf remove unitedrpms-36-20.fc36.noarch
+%%
+
+
+/// dnf issue: "All matches were filtered out by exclude filtering for argument"
+# # https://reddit.com/r/Fedora/comments/frdbkk/dnf_kernel_headers/
+
+sudo dnf install --disableexcludes=all kernel-devel
+grep -R exclude -- /etc/yum.repos.d/ /etc/dnf/dnf.conf
+%%
+
+
+/// dnf install: c++ manual documentation
+# https://unix.stackexchange.com/questions/12688/man-pages-for-standard-c-and-c-libraries-on-fedora-14
+# https://packages.ubuntu.com/jammy/all/cppreference-doc-en-html/download
+
+yum install man-pages man-pages-pl libstdc++-docs
+man fopen
+man std::iostream
+man -M /usr/share/man/man3 std::iostream
+
+alien -v --to-rpm ./cppreference-doc-en-html_20170409-1_all.deb
+sudo dnf localinstall ./cppreference-doc-en-html_20170409-2.noarch.rpm
+sudo dnf install devhelp
+%%
+
+
+/// flatpak install: extensions
+# https://flathub.org/apps/details/org.gnome.Extensions
+flatpak install org.gnome.Extensions
+flatpak run org.gnome.Extensions
+%%
+
+
+/// issue dnf: "Repository vivaldi is listed more than once in the configuration"
+# https://ask.fedoraproject.org/t/remove-vivaldi-or-fix-wrinkle/13119/4
+ls /etc/yum.repos.d/
+sudo rm /etc/yum.repos.d/vivaldi-fedora.repo
+dnf check-update
+sudo dnf upgrade
+%%
+
+
+/// mpv nobara issue: multimedia codecs, webm not supported
+# https://ask.fedoraproject.org/t/i-cant-play-a-video-on-fedora/3096
+# https://docs.fedoraproject.org/en-US/quick-docs/assembly_installing-plugins-for-playing-movies-and-music/
+
+sudo dnf install gstreamer1-plugins-{bad-\*,good-\*,base} gstreamer1-plugin-openh264 gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel
+sudo dnf install lame\* --exclude=lame-devel
+sudo dnf group upgrade --with-optional Multimedia
+mpv --quiet --ao=pulse --vo=gpu video.webm
+%%
+
+
+/// flatpak: apps path, apps location
+# https://www.reddit.com/r/flatpak/comments/f6uq3z/where_are_flatpaksflatpak_apps_installed/
+# /var/lib/flatpak/app
+
+flatpak info --show-location io.github.jliljebl.Flowblade
+%%
+
+
+/// flatpak: remove unused apps
+# https://www.linuxuprising.com/2019/02/how-to-remove-unused-flatpak-runtimes.html
+
+flatpak uninstall --unused
+flatpak uninstall --unused --user
+%%
+
+
+/// fedora: optional post-upgrade tasks
+# https://docs.fedoraproject.org/en-US/quick-docs/dnf-system-upgrade/
+
+dnf repoquery --unsatisfied            # packages with broken dependencies
+dnf repoquery --duplicates             # packages with multiple versions installed
+dnf list extras                        # packages from non-official repositories
+sudo dnf autoremove                    # safely remove packages no longer in use
+
+sudo symlinks -r /usr | grep dangling  # find dangling symbolic links
+sudo symlinks -r -d /usr               # clean-up old symlinks
+
+# clean-up old kernels
+sudo dnf remove $(dnf repoquery --installonly --latest-limit=-1 -q)
+%%
+
+
+/// linux: change hostname
+# https://www.howtogeek.com/197934/how-to-change-your-hostname-computer-name-on-ubuntu-linux/
+
+sudo nano /etc/hostname                # change after reboot
+sudo hostname hp-pc-tg01-1544nw        # change immediately
+%%
+
+
+/// nautilus gnome-files: recursive search instead of type-ahead search
+# https://askubuntu.com/questions/897323/enable-recursive-search-in-nautilus
+
+gsettings set org.gnome.nautilus.preferences enable-interactive-search false
+
+dconf-editor:/org/gnome/nautilus/preferences/enable-interactive-search:false
+dconf-editor:/org/gnome/nautilus/preferences/enable-interactive-search/fts-enabled:false
+dconf-editor:/org/gnome/nautilus/preferences/enable-interactive-search/
+%%
+
+
+/// bash terminal-emulator: ps1 environmental variable, coloring shell prompt
+# https://linoxide.com/change-bash-prompt-variable-ps1/
+# https://linuxhint.com/linux_terminal_customization_guide_beginners/
+# https://unix.stackexchange.com/questions/148/colorizing-your-terminal-and-shell-environment
+# https://stackoverflow.com/questions/20909942/color-linux-command-output
+
+echo $PS1
+nano ~/.bashrc
+export PS1='[\u@\h \W]$ '
+source ~/.bashrc
+
+export PS1='\[\e[97m\][\[\e[92m\]\u\[\e[97m\]@\[\e[92m\]\h\[\e[91m\] \w\[\e[97m\]]\[\e[94m\]\$\[\e[0;39m\] '
+# "[USER@HOSTNAME PWD]$ "
+# "<white>[<green>USER<white>@<green>HOSTNAME<red> PWD<white>]<blue>$<reset> "
+%%
+
+
+/// dnf issue: upgrades available but none are going to be installed
+# https://www.reddit.com/r/Fedora/comments/gq7igi/dnf_not_showing_available_updates/
+
+dnf check-update
+sudo dnf upgrade --refresh
+%%
+
+
+/// terminal-emulator issue: bracketed paste mode enabled, unwanted characters after copy
+# https://unix.stackexchange.com/questions/196098/copy-paste-in-xfce4-terminal-adds-0-and-1
+# https://askubuntu.com/questions/981099/unwanted-symbols-while-pasting-text-on-to-terminal
+# https://bbs.archlinux.org/viewtopic.php?id=174595
+
+text-to-copy                      # CTRL+SHIFT+C
+~0[text-to-copy]~1                # after CTRL+SHIFT+V in may looks like this
+
+printf "\e[?2004l"                # temporarily turn-off bracketed paste mode
+reset                             # for badly closed bash session
+echo -ne '\e[>c'                  # "65;6800;1c" → if middle number <=3602 VTE bug is present
+set enable-bracketed-paste Off    # remove this line from .inputrc
+
+cat >> file.dump.txt              # paste the text and hit CTRL+C
+cat file.dump.txt | od -c         # this will show characters being pasted
+%%
+
+
+/// gnome-image-viewer issue: cannot open webp images
+# https://itsfoss.com/webp-ubuntu-linux/
+
+sudo dnf install webp-pixbuf-loader
+sudo dnf install gthumb
+%%
+
+
+/// yt-dlp: download 1080p webm video & audio mpeg-dash and merge them
+dwnl_path=~/hp-pc-tg01-1544nw/roboczy/video/
+url=https://www.youtube.com/watch?v=_joQEa-mB-w
+name="[GameSpot Trailers] Guild of Dungeoneering - Launch Trailer.webm"
+yt-dlp --list-formats "$url"
+yt-dlp --format=248 -o '[%(channel)s] %(title)s.%(ext)s.video' -P "$dwnl_path" "$url"
+yt-dlp --format=251 -o '[%(channel)s] %(title)s.%(ext)s.audio' -P "$dwnl_path" "$url"
+ffmpeg -i "./$name.video" -i "./$name.audio" -c:v copy -c:a copy "./$name.webm"
+unset name
+unset url
+unset dwnl_path
+%%
+
+
+// audacity issue: cannot open aac/m4a/mp3 files, "FFmpeg support not compiled in"
+# https://www.videoconverterfactory.com/tips/audacity-aac.html
+# https://manual.audacityteam.org/man/installing_and_updating_audacity_on_linux.html
+# https://forum.audacityteam.org/viewtopic.php?t=118408
+# https://www.audacityteam.org/download/linux/
+# https://bugs.launchpad.net/ubuntu/+source/audacity/+bug/1313211
+# https://forum.audacityteam.org/viewtopic.php?t=77651
+# https://www.audacityteam.org/download/source/
+
+sudo dnf install ffmpeg lame fdkaac
+./audacity-linux-3.1.3-x86_64.AppImage
+
+flatpak install org.audacityteam.Audacity
+flatpak run org.audacityteam.Audacity
+%%
+
+
+// flatpak issue: "The Freedesktop SDK 19.08 runtime is no longer supported as of September 1, 2021"
+# https://www.reddit.com/r/pop_os/comments/ncpbzl/flatpak_orgfreedesktopplatform_endoflife_messages/
+# https://unix.stackexchange.com/questions/512268/how-to-list-all-flatpak-apps-that-use-a-specific-runtime
+
+flatpak list --app --app-runtime=org.freedesktop.Platform.GL.default
+flatpak list --app --app-runtime=org.freedesktop.Sdk//19.08.15
+flatpak list --app --columns=application,runtime,version,size
+flatpak list --app
+flatpak list --runtime
+flatpak uninstall --unused
+%%
+
+
+/// mpv: command-line arguments, user-specific configuration file
+# ~/.config/mpv/mpv.conf
+screenshot-directory=~/hp-pc-tg01-1544nw/roboczy/
+
+mpv --hwdec=vdpau --vo=gpu --audio-pitch-correction=yes video.mp4
+mpv --keep-open=always --quiet --ao=pulse --force-window=yes --autofit=1400x900 --osd-font='Ubuntu' --screenshot-template=%02n --msg-level=all=status --start=0:0 --speed=1.0 '/home/edissu/hp-pc-tg01-1544nw/__muzyka/original-sound-tracks/elden-ring-ost-2022/56 Malenia Blade of Miquella.ogg'
+mpv --keep-open=always --quiet --vo=gpu --ao=pulse --force-window=yes --autofit=1400x900 --osd-font='Ubuntu' --osd-font-size=23 --screenshot-template=%02n --screenshot-format=webp --screenshot-webp-lossless=yes --msg-level=all=status --start=0:0 --speed=1.0 '/home/edissu/hp-pc-tg01-1544nw/__muzyka/original-sound-tracks/elden-ring-ost-2022/54 Mohg Lord of Blood.ogg'
+mpv --keep-open=always --quiet --vo=gpu --ao=pulse --ontop --force-window=yes --autofit=1400x900 --osd-font='Ubuntu' --screenshot-template=%02n --screenshot-format=webp --msg-level=all=status --start=0:0 --speed=1.0 '/home/edissu/hp-pc-tg01-1544nw/roboczy/video/[javidx9] Forbidden C++.webm'
+%%
+
+
+/// keepassxc issue: icon size is too large
+# https://bugs.archlinux.org/task/71820
+# https://github.com/keepassxreboot/keepassxc/issues/5870
+# https://github.com/keepassxreboot/keepassxc/issues/1888
+
+env QT_SCALE_FACTOR=1.01 keepassxc
+env QT_AUTO_SCREEN_SCALE_FACTOR=1 keepassxc
+QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCREEN_SCALE_FACTORS=2 keepassxc
+bash -c "QT_AUTO_SCREEN_SCALE_FACTOR=1 QT_SCREEN_SCALE_FACTORS=2 keepassxc %f"
+%%
+
+
+/// dnf: list of manually installed packages
+# https://www.reddit.com/r/Fedora/comments/4n9p8l/list_manually_installed_package/
+# https://tylersguides.com/guides/listing-installed-packages-with-dnf/
+
+dnf list installed | grep '@commandline'
+dnf history userinstalled | less
+rpm -qa
+%%
+
+
+/// adb: no permissions to a device
+# https://askubuntu.com/questions/908306/adb-no-permissions-on-ubuntu-17-04
+
+sudo adb kill-server
+sudo adb start-server
+adb devices
+%%
+
+
+/// fedora network: ipv6 accessibility
+# https://unix.stackexchange.com/questions/48723/how-to-check-a-fedora-system-if-ipv6-is-disabled-or-not
+
+ip a l wwp2s0f0u3i2          # inet6
+ip a l eth0
+lsmod | grep -i 'ip'
+%%
+
+
+/// linux swap hardware: swappiness
+# https://askubuntu.com/questions/157793/why-is-swap-being-used-even-though-i-have-plenty-of-free-ram
+
+When having more than 8GB of RAM suggested swappiness=10.
+When having SDD only suggested swappiness=1.
+
+cat /proc/sys/vm/swappiness                                           # current
+sudo bash -c "echo 'vm.swappiness = 10' >> /etc/sysctl.conf"          # permanent
+sudo sysctl vm.swappiness=10                                          # session
+sudo sysctl -p                                                        # refresh
+%%
+
+
+/// linux files: absolute file path
+# https://linuxhandbook.com/get-file-path/
+
+pwd
+readlink -f filename_or_symlink
+realpath filename
+realpath -s filename_but_without_following_symlink
+find $(pwd) -name "*.pdf"
+ls -ld "$PWD"/*
+ls -l "$PWD"/filename
+*/
+%%
+
+
+/// anaconda conda: update, install, uninstall
+conda update --all
+conda search --full-name python
+conda install -c anaconda python=3.7
+
+env | grep 'conda'
+unset CONDA_EXE
+unset CONDA_PREFIX
+unset CONDA_PYTHON_EXE
+unset OLDPWD
+%%
+
+
+/// network fedora ubuntu: set dynamic/static ip address
+# LinuxHandbook | "How to Change IP Address in Linux" | https://linuxhandbook.com/change-ip-address/
+# LinuxHint | "How to configure a static IP address on Fedora?" | https://linuxhint.com/configure-static-ip-address-fedora/
+# How-To Geek | "How to Change Your IP Address From the Command Line in Linux" | https://www.howtogeek.com/118337/stupid-geek-tricks-change-your-ip-address-from-the-command-line-in-linux/
+# AskFedora | "How to temporarly switch network to dhcp using nmcli?" | https://ask.fedoraproject.org/t/how-to-temporarly-switch-network-to-dhcp-using-nmcli/15110
+# FedoraDocs | "Configuring IP networking with nmcli" | https://docs.fedoraproject.org/en-US/quick-docs/configuring-ip-networking-with-nmcli/
+
+ip a                                                       # show current IP
+sudo ip addr add 192.168.56.21/24 dev eth1                 # most distros
+
+nmcli general status                                       # Fedora
+nmcli -t -f STATE general                                  # status
+nmcli con show -a                                          # active connections
+nmcli dev status                                           # active & inactive connections
+nmcli -t device
+ip addr | grep enp0s3
+sudo nmcli connection modify f02789f7-9d84-3870-ac06-8e4edbd1ecd9 IPv4.address 10.0.2.27/24
+sudo nmcli connection modify 'Wired connection' IPv4.address 10.0.2.27/24
+sudo nmcli connection modify 'Wired connection' IPv4.gateway 10.0.2.11
+sudo nmcli connection modify 'Wired connection' IPv4.dns 8.8.8.8
+sudo nmcli connection modify 'Wired connection' IPv4.method manual
+sudo nmcli connection down 'Wired connection'
+sudo nmcli connection up 'Wired connection'
+route -n
+ip addr | grep enp0s3
+
+nmcli device modify "$DEVICE" ipv4.method auto             # DHCP
+nmcli device reapply "$DEVICE"
+nmcli connection up "$PROFILE"
+
+sudo nmcli connection add type et connection.id et         # replace current connection
+sudo nmcli connection down id enp3s0
+sudo nmcli connection up id et
+
+sudo ifconfig eth0 192.168.0.1 netmask 255.255.255.0
+sudo route add default gw 192.168.0.253 eth0
+route -n
+ipconfig getifaddr eth0
+
+sudo nano /etc/network/interfaces                          # Ubuntu 17.10
+/etc/sysconfig/networking-scripts/ifcfg-*                  # RedHat-based distros
+auto eth0                                                  # dynamic IP (DHCP)
+iface eth0 inet dhcp
+auto enp0s3                                                # static IP
+iface enp0s3 inet static
+address 192.168.56.20
+netmask 255.255.255.0
+gateway 192.168.40.31
+sudo systemctl restart networking.service                  # apply
+
+sudo nano /etc/netplan/config.yaml                         # Netplan, Ubuntu
+sudo netplan try
+sudo netplan apply
+%%
+
+
+/// linux: indentify init system
+# LinuxHandbook | "How to Know if You Are Using Systemd or Some Other Init in Linux" | https://linuxhandbook.com/check-if-systemd/
+
+ps -p 1 -o comm=
+ps 1
+stat /sbin/init
+pstree | head
+%%
+
+
+/// rsync: ignoring existing files
+rsync -vrh --progress --ignore-existing "/run/media/edissu/51F05A7A65E6C17F/ubisoft-library/Assassin's Creed Valhalla/" "/run/media/edissu/WinGames/ubisoft-games/Assassin's Creed Valhalla/"
+rsync -vrh --progress --update source target
+rsync -vrh --progress --checksum dir1 dir2
+%%
+
+
+/// softmaker freeoffice: install service pack
+# https://www.freeoffice.com/en/service/tips-and-tricks/linux#fedora
+sudo wget -qO /etc/yum.repos.d/softmaker.repo https://shop.softmaker.com/repo/softmaker.repo
+sudo dnf update
+sudo dnf install softmaker-freeoffice-2021
+%%
+
+
+

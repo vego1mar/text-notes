@@ -1,0 +1,1030 @@
+/// Herb Sutter's notes on concurrency
+
+# → THE PILLARS OF CONCURRENCY
+# Pillar 1: Responsiveness and Isolation Via Asynchronous Agents
+# Pillar 2: Throughput and Scalability Via Concurrent Collections
+# Pillar 3: Consistency Via Safely Shared Resources
+
+# context-switching overhead
+# free lunch
+# fine-grained
+# hardware parallelism
+# thread pool-driven program
+# cache sloshing
+
+
+# → HOW MUCH SCALABILITY DO YOU HAVE OR NEED?
+# Issue: how to divide a work to N cores available? (how to tranform an algorithm into a 'sea of work'?)
+# O(1), O(k), O(n) → single-threaded OS, fixed-threaded OS, unknown & future architecture
+
+
+
+# → USE CRITICAL SECTION (PREFERABLY LOCKS) TO ELIMINATE RACES
+# A critical section is a region of code that shall execute in isolation with respect to some or all other code in the program (aquire-work-release structure).
+# Synchronization tools: lock, lock-free coding (e.g. double-checked locking, atomics)
+# Synchronization type: lock, condition variable, semaphor, ordered atomics, unordered atomics and explicit fences
+
+
+
+# → APPLY CRITICAL SECTIONS CONSISTENTLY
+# Producer-Consumer
+# We can, of course, use mutexes, e.g. Linux mb()
+# Or, alternatively, table[0] can be set/get only by Producer, so that Consumer enforces a logical lock
+
+# Outside critical section (acquire-release) there is no safe synchronization.
+x = 1;                   // Thread 1
+mut.lock();              // abusive of critical section usage
+mut.unlock();            // it is treated as an event, not a section
+
+while( mut.trylock() )   // Thread 2
+  mut.unlock();          // if Thread 1 finishes too early, then Thread 2 loop will be infinite
+r2 = x;                  // not guaranteed; compiler may optimize
+
+
+
+# → AVOID CALLING UNKNOWN CODE WHILE INSIDE A CRITICAL SECTION
+# We expect from a modular code to need not to know about the internal implementation details to be able to use it correctly.
+# Locks, and other synchronization techniques, are not modular or composable.
+# Thus, to combine a pair of lock-using modules safely, each module, while holding a lock (being inside a critical section), must be careful to not to call into the other module.
+# That is, e.g., avoid invoking synchronized RenderElements() that calls synchronized OnRender(), because mutexes may be acquired in the opposite order.
+# Otherwise, a problem of a deadlock ('deadly embrace') arises.
+# We can use techniques such as lock hierarchies to guarantee that locks are taken in order.
+# While inside a critical section avoid calling: library functions, plug-ins, other callbacks, function pointers, functors, delegates, virtual methods, generic methods, methods on a generic type.
+# To remove a call to unknown code from a critical section do: (a) move the call out of the critical section; (b) make copies of data; (c) reduce the granularity or power of the critical section, e.g. using a read-only lock; (d) instruct the callee sternly, e.g. tell him in a documentation what not to do.
+
+
+
+# → USE LOCK HIERARCHIES TO AVOID DEADLOCK
+# Lock hierarchies must be acquire and released in a consistent order.
+# a.lock(); b.lock(); // a and b released in any order introduces a potential deadlock
+# The idea of a lock hierarchy is to assign a numeric level to every mutex in the system, and:
+# (1) while holding a lock at level N, you may only acquire new locks on mutexes <N
+# (2) we need a lock_multiple(mut1, mut2, …) to make sure about acquire/release order
+# wrapper class should have a thread-local static variable
+class Wrapper {
+    const static thread_local myLevel;
+    static thread_local currentLevel = MAX_LEVEL;
+    Wrapper(MutexLevel l) { myLevel = l; }
+    // asserts here enforces in the debug build any errors to be exposed that violates the hierarchy
+    void lock(mutex) { assert(currentLevel > myLevel); currentLevel = obtain(); previous = currentLevel; }
+    void unlock(mutex) { currentLevel = previous; }
+    void try_lock(mutex) { /* proceed as in lock() */ }
+    // it may be an address order, UUID order, or any other globally consistent order
+    void lock_multiple(mutex...) { assert(m1.level == m2.level == …); lock_in_order(mutex...); }
+    void unlock_multiple(mutex...);
+};
+
+
+
+# → BREAK AMDAHL'S LAW!
+# Amdahl's Law: some amount of a program's processing is fully O(N) parallelizable (portion p), and only that portion can scale directly on machines having more and more processor cores. The rest of the program's work is O(1) sequential. The best possible speedup of that program workload on a machine with N cores is given by: speedup == (s+p)/[(s+p)/N].
+# p and s are not fixed
+# Gustafson's Law: you can increase p by doing more of the same: increase the volume of data processed by the parts that are O(N) parallelizable (and therefore the percentage p of time spent in computing). 'it may be most realistic to assume that run time, not problem size, is constant'. The total work (best possible speedup) a program can perform in a fixed time on a machine with N cores is given by: total_work == s+Np.
+# We can speed up purely sequential programs by injecting O(K) concurrency in the form of caching, prefetching, instruction ordering, and pipelining.
+Quantity computeSales() {
+    return region1.sales() + region2.sales();         // O(1)
+}
+Quantity computeSales() {
+    Runnable sales1{ region1.sales(); };
+    Runnable sales2{ region2.sales(); };              // operation must be independent
+    ThreadPool pool{ sales1, sales2 };                // O(2)
+    pool.execute();
+    return pool.result[0] + pool.result[1];
+}
+
+
+
+# → GOING SUPERLINEAR
+# → SUPER LINEARITY AND THE BIGGER MACHINE
+# It is indeed important and useful to know we can turn any parallel algorithm into a sequential one by just doing the steps of the work one at a time instead of P at a time. 
+
+# Superlinear parallel algorithms performance typically relies on two aspects:
+# (1) immediate return (necessary, a must-have)
+# (2) stop abandoned work (highly desirable, a nice-to-have, called cancellation or interruption)
+
+
+
+# → INTERRUPT POLITELY
+# How do you stop a thread or task you no longer need or want?
+# kill: avoid since it is almost certain to corrupt a transaction; pthread_kill
+# fire & self-clean: interrupt at well-defined points (for OS with no exceptions); pthread_cancel
+# ask politely: interrupt but allow request to be ignored; Thread.interrupt
+# set flag politely & let it poll: actively check a flag; manual approach
+
+# Typical cancellation/interruption points:
+# waiting for synchronization (acquiring a mutex, getting a signal on a semaphore, etc.)
+# joining with another thread/task
+# sleeping
+
+# Deferred cancelation means that target thread abortion cannot be omitted.
+# Interruption means that target thread can catch and handle the exception from wait/join/sleep.
+# What about library calls that are interruptible? If it doesn't cooperate, don't shoot! Violence is not an answer.
+
+
+
+# → MAXIMIZE LOCALITY, MINIMIZE CONTENTION
+# Locality is about fitting well into cache and RAM as well as about scalability.
+# Avoid lock convoys.
+while(...) {
+    mutex.lock();            // a lock convoy:
+    do_work();               // threads are piled up in time behind the lock
+    mutex.unlock();          // each waiting idly to for its turn to come
+}
+# On a multicore hardware, when reading a memory line, it is cached as a part of hardware's cache coherency protocol, and then the core takes automatically an exclusive write lock on that cached line.
+# Lock convoys happen when two distinct tasks are stored in the same cache lines in memory. It is called a false sharing then or a ping-ponging.
+# This can be fixed using a memory padding, that is wasting space to improve performance.
+
+# Cache-conscious design:
+# (1) Keep data that are not used together apart in memory.
+# (2) Keep data that is frequently used together close together in memory.
+# (3) Keep 'hot' (frequently accessed) and 'cold' (infrequently accessed) data apart.
+
+# Parallel scalability design:
+# (1) Express it: find work that can be parallelized.
+# (2) Then don't lose it: avoid scalability busters, choose concurrency-friendly data structures.
+
+
+
+# → CHOOSE A CONCURRENCY-FRIENDLY DATA STRUCTURES
+# Linked lists
+# Balanced search trees
+# Unbalanced trees that support localized updates
+
+# Note: not all node-based containers (non-contiguous) are good for concurrency. Consider insertion in a red-black tree (non-localized tree rebalance).
+# Red-black trees may use lock hierarchies, but this introduces a deadlock in terms of parallel search.
+# More concurrency-friendly red-black trees are using 'relaxed balancing'. Alternative structures to them are called 'skip lists'.
+
+
+
+# → THE MANY FACES OF A DEADLOCK
+# Deadlock can happen whenever there is a blocking (or waiting) cycle among concurrent tasks.
+# 'When N threads enter a locking cycle where each tries to take a lock the next already holds.'
+# 'When N concurrent tasks enter a cycle where each one is blocked waiting for the next.'
+# Synchronization (dead)blocks: acquiring a lock, waiting for a semaphore or condition variable to be signaled, waiting to join with another thread or task, acquiring exclusive access to any resources (notably I/O), waiting for a future or write-once variable to be available (asynchronous task result), performing a blocking receive call on a TCP socket, waiting for a user keystroke.
+int run() {
+    mut.lock();                        // Thread 1
+    char = ReadKeystroke();            // blocking
+}
+
+
+
+# → LOCK-FREE CODE: A FALSE SENSE OF SECURITY
+# Reads and writes of a lock-free variable must be atomic. For this reason, lock-free variables are typically no larger than the machine's native word size, and are usually pointers (C++), object references (Java, .NET), or integers.
+# Reads and writes of a lock-free variable must occur in an expected order, which is nearly always the exact order they appear in the program source code. But compilers, processors, and caches love to optimize reads and writes, and will helpfully reorder, invent, and remove memory reads and writes unless you prevent it from happening. 
+# Memory reordering heuristic: treating the function as single thread, if the memory reordering will not change the result, then the memory ordering will happen.
+# The right prevention happens implicitly when you use mutex locks or ordered atomic variables (C++0x std::atomic, Java/.NET volatile); you can also do it explicitly, but with considerably more effort, using ordered API calls (e.g., Win32 InterlockedExchange) or memory fences/barriers (e.g., Linux mb).
+template<typename T> struct LockFreeQueue {
+    std::list<T> list;
+    typename std::list<T>::iterator iHead, iTail;          // lock-free vars: not a machine word
+  public:
+    LockFreeQueue() {
+        list.push_back(T());                               // dummy memory separator
+        iHead = list.begin();
+        iTail = list.end();
+    }
+};
+void produce(const T& t) {
+    list.push_back(t);                                     // race condition: lines may be reordered
+    iTail = list.end();                                    // publish an item
+    list.erase(list.begin(), iHead);                       // trim unused nodes
+}
+bool consume(T& t) {
+    typename std::list<T>::iterator iNext = iHead;         // race condition: simultaneous read/write
+    ++iNext;
+    if (iNext != iTail) {
+        // iHead = 0xDEADBEEF;                             // compiler/processor transient value
+        iHead = iNext;                                     // publish that we took an item
+        t = *iHead;
+        return true;
+    }
+    return false;
+}
+
+
+
+# → WRITING LOCK-FREE CODE: A CORRECTED QUEUE
+# Lock-free code essential mindset:
+# key concept: think in transactions — all-or-nothing for each operation on a data structure, publish each change to the shared data with a single atomic write or compare-and-swap
+# key concept: know who owns what data — you know this by looking at the value of the ordered atomic variable that says who is it, mistakes means races
+# key tool: volatile int (#C), AtomicInteger (Java), std::atomic<T> (C++)
+# key tool: the ordered atomic variable — is a lock-free-safe variable that guarantees: atomicity (machine word size), order (no compiler/linker optimization), compare-and-swap (conditional compare, then conditional assignment, e.g. variable.compare_exchange(expectedValue, newValue); some systems instead provide load-linked/store-conditional)
+
+
+
+# → WRITING A GENERALIZED CONCURRENT QUEUE
+# Fully non-blocking technique: M. Michael and M. Scott: "Simple, Fast, and Practical Non-Blocking and Blocking Concurrent Queue Algorithms" (Proceedings of the 15th ACM Symposium on Principles of Distributed Computing, 1996)
+
+// singly-linked list —       [data, next]
+// doubly-linked list — [prev, data, next]
+template<typename T> struct LowLockQueue {
+  private:
+    // the list always contains a dummy node at the head
+    // we want to avoid the empty-queue boundary case
+    struct Node {
+        Node(T* val): value(val), next(nullptr) {}
+        
+        T* value;
+        std::atomic<Node*> next;
+        char pad[CACHE_LINE_SIZE - sizeof(T*) - sizeof(std::atomic<Node*>)];
+        // this padding pattern may be too conservative
+        // each Node will be allocated on the heap, and a heap allocator may add its own padding
+        // consider to use bit fields
+    };
+    
+    // introduce padding to make sure that data used by different threads stays physically…
+    // separate in memory and cache; to avoid invisible contention through ping-ponging
+    char pad0[CACHE_LINE_SIZE];
+    Node* first;
+    char pad1[CACHE_LINE_SIZE - sizeof(Node*)];
+    std::atomic<bool> consumerLock;
+    char pad2[CACHE_LINE_SIZE - sizeof(std::atomic<bool>)];
+    Node* last;
+    char pad3[CACHE_LINE_SIZE - sizeof(Node*)];
+    std::atomic<bool> producerLock;
+    char pad4[CACHE_LINE_SIZE - sizeof(std::atomic<bool>)];
+    
+  public:
+    LowLockQueue() {
+        first = last = new Node(nullptr);
+        producerLock = consumerLock = false;
+    }
+    
+    ~LowLockQueue() {
+        // ctor/dtor does not need a synchronization
+        // because it should be invoked in isolation
+        while (first != nullptr) {                         // release the list
+            Node* tmp = first;
+            first = tmp->next;
+            delete tmp->value;                             // no operation on null
+            delete tmp;
+        }
+    }
+    
+    void produce(const T& t) {
+        Node* tmp = new Node(new T(t));
+        
+        while (producerLock.exchange(true)) {}             // try_lock: aquire exclusivity
+        last->next = tmp;                                  // publish to consumers
+        last = tmp;                                        // swing last forward
+        producerLock = false;                              // release exclusivity
+    }
+    
+    bool consume(T& result) {
+        while (consumerLock.exchange(true)) {}             // acquire exclusivity
+        Node* theFirst = first;
+        Node* theNext = first->next;
+        
+        if (theNext != nullptr) {                          // if queue is non-empty
+            T* val = theNext->value;                       // take it out
+            theNext->value = nullptr;                      // off the Node
+            first = theNext;                               // swing first forward
+            consumerLock = false;                          // release exclusivity
+            
+            result = *val;                                 // copy it back
+            delete val;                                    // clean up the value
+            delete theFirst;                               // clean up the dummy
+            return true;                                   // report success
+        }
+        
+        consumerLock = false;                              // release exclusivity
+        return false;                                      // report queue was empty
+    }
+};
+
+
+
+# → UNDERSTANDING PARALLEL PERFORMANCE
+# measure scalability, e.g. a container by how well it scales when holding data items of different sizes
+# stress test to measure throughput, e.g. the total amount of work accomplished per unit time
+# build a scatter graph, e.g. scalability_different_workloads[consumerThreads, producerThreads]; 
+# build a curve/discrete plot, e.g. the_same_workload[throughputAsQueueItemsPerSecond, coresUtilization]
+
+# Penalties of contention:
+# classic effect of growing contention: after graph' upslope, even as throughput is still rising, the rate of increase is slowing down as the curve begins to bend
+# oversubscription: having more CPU-bound work ready to execute than we have available hardware
+
+# Sources of overhead:
+# expressing code in a parallel way, i.e. do not use 'new Thread' every time you want to execute a task, use thread pools instead (it pay a tax of two context-switches, though)
+# unrealized concurrency: especially idling the main thread that will wait for tasks results
+# work stealing: only if another core runs out of work and sees that our thread has waiting queue work to be performed, will the work be 'stolen' and efficiently shipped to the other thread
+
+int net_sales_sequentially() {
+    int wholeSale = computeWholeSale();
+    int retail = computeRetail();
+    int returns = computeTotalReturns();
+    return wholeSale + retail - returns;
+}
+int net_sales_parallelly() {
+    std::future<int> wholeSale = pool.run([]{ computeWholeSale(); });     // task 1
+    std::future<int> retail = pool.run([]{ computeRetail(); });           // task 2
+    int returns = computeTotalReturns();                                  // keep the tail work
+    wait_all(wholeSale, retail);                                          // wait once
+    return wholeSale.value() + retail.value() - returns;
+    // this implementation will probably be slower than sequential one…
+    // on a single-core machine; we can mitigate this kind of overhead…
+    // by adjusting granularity to use fewer or larger chunks of work
+}
+void quicksort_parallel(Iterator first, Iterator last) {
+    if (distance(first, last) < THRESHOLD) {
+        sort_sequential(first, last);
+        // <    10'000    bubblesort
+        // <   100'000    heapsort
+        // >   100'000    quicksort
+        // > 1'000'000    alternatives, e.g. indexing
+    }
+    else {
+        Iterator pivot = Partition(first, last);
+        future f1 = pool.run([&]{ quicksort_parallel(first, pivot); });
+        quicksort_parallel(pivot, last);
+        f1.wait();
+    }
+}
+
+
+
+# → MEASURING PARALLEL PERFORMANCE: OPTIMIZING A CONCURRENT QUEUE
+# Properties to consider for parallel troughput:
+# overall throughput: the total amount of work the system is able to acomplish
+# scalability: the ability to use more cores to get more work done
+# contention: how much different threads interfere with each other by fighting for resources
+# cost of oversubscription: having more CPU-bound work ready to execute than available hardware to execute it (graph' diagonal dropoff — a classic artifact)
+
+
+
+# → VOLATILE VS. VOLATILE
+# Meaning of the 'volatile' keyword depends on a programming language:
+# ordered atomics for lock-free programming (Java, C#)
+# unoptimizable variables for 'unusual' memory (C++)
+
+                         |-----------------------------|------------------------------------------------|
+                         | lock-free programming       | semantic-free variables (unusual memory)       |
+                         | volatile in Java; atomic<T> | volatile in ISO C++                            |
+-------------------------|-----------------------------|------------------------------------------------|
+atomicity:               | Yes,                        | No,                                            |
+Are special loads and    | either for types T up to    | in fact sometimes they cannot be naturally     |
+stores guaranteed to be  | a certain size (Java/.NET)  | atomic (e.g. HW registers that must be un-     |
+all-or-nothing?          | or for all T (ISO C++)      | aligned or larger than CPU's native word size) |
+-------------------------|-----------------------------|------------------------------------------------|
+optimizing ordinary      | Some,                       | Some,                                          |
+memory operations:       | in one direction only, down | one reading of the standard is that ordinary   |
+Can those be reordered   | across an ordered atomic    | loads may be reordered across a volatile load  |
+across these special     | load or up across an        | or store, but not ordinary writes              |
+ones?                    | ordered atomic store        |                                                |
+-------------------------|-----------------------------|------------------------------------------------|
+optimizing these special | Some                        | No                                             |
+operations: Can these    | optimizations are allowed,  | optimization possible; the compiler is not     |
+special loads and stores | such as combining two       | allowed to assume it knows anything about the  |
+themselves be reordered/ | adjacent stores to the same | type, not even:                                |
+invented/elided?         | location                    | "v = 1; r1 = v;" → "v = 1; r1 = 1;"            |
+-------------------------|-----------------------------|------------------------------------------------|
+
+# In general volatile is to deal with situations, where compiler must assume that the variable can change value at any time and/or that reads and writes may have unknowable semantics and consequences (e.g. through direct connections to registers).
+# Such volatile variables are unoptimized variables.
+# All reads and writes of unoptimizable variables on a given thread must execute exactly as written.
+# This is a stronger statement than for ordered atomics, which only need to execute in source code order.
+
+a = 1;        // A
+b = 2;
+// Line A can be eliminated by a compiler/processor/cache if the variable is an ordered atomic.
+// Line A cannot be eliminated if the variable is an unoptimized volatile.
+
+# In C++ there is also possible to use 'volatile std::atomic<T>' variable.
+
+
+
+# → SHARING IS THE ROOT OF ALL CONTENTION
+
+  requires          |-------------------|-------------------|
+  synchronization?  |      shared       |     unshared      |
+ -------------------|-------------------|-------------------|
+      mutable       |        Yes        |        No         |
+ -------------------|-------------------|-------------------|
+    immutable       |        No         |        No         |
+ -------------------|-------------------|-------------------|
+
+# Sharing fundamentally requires waiting and demands answers to expensive questions.
+
+ -------------------------|---------------------------|--------------------|-------------------------|
+ contention               |         software          |      software      |       hardware          |
+ penalties                |         (visible)         |     (invisible)    |      (invisible)        |
+ -------------------------|---------------------------|--------------------|-------------------------|
+ blocking progress        | blocking calls;           | context switches;  | exclusive ownership;    |
+ (waiting requirement)    | opening a file for write; | synchronized I/O   | false sharing;          |
+                          | CAS loop in obstruction-  | (e.g. consoles)    | tasks using the same    |
+                          | -free algorithms          |                    | spindle (e.g. DVD, HDD) |
+ -------------------------|---------------------------|--------------------|-------------------------|
+ slowing progress         | unlocking calls;          | context switches;  | sync-after-write;       |
+ (coordination overhead)  | atomic variable r/w;      | CAS: sharing a ref | CAS: full memory sync   |
+                          | compare-and-swap (CAS)    | counted object;    | before & after;         |
+                          |                           | inhibits optims    | inhibits optimizations  |
+ -------------------------|---------------------------|--------------------|-------------------------|
+ wasting progress         | retrying CAS loop in      | backoff/retry      | CAS impld with loop;    |
+ (throwing away work)     | lock-free algorithms      | protocols          | eviction (sharing cache)|
+ -------------------------|---------------------------|--------------------|-------------------------|
+
+# Critical section accesses requires a serialization, which is the opposite of parallel.
+# Lock-free structures 'commit' a flag if the task is done. Such code assumes arbitralily that no other writers are present and try to execute its work. To confirm 'success' CAS operation is being used. If it's a 'failure', then CAS need to loop to try again to attempt a 'commit' again. Each reentrance may need to partially or entirely throw away the work it did the previous time through, including deallocation, disposal, rollback.
+
+# Shared objects cause overhead, even in a race.
+# Writing to a shared memory object from multiple processors makes those processors wait for each other.
+# It's because we're writing to a shared object through potentially complex levels of cache.
+# Achieving cache coherence requires coordination and overhead to maintain the illusion of contiguous memory.
+# The memory containing the accessed parts must be loaded from RAM up through the pyramid of cache (L1-L2-L3) leading to that core.
+
+# All sharing is bad, even of 'unshared' objects.
+# Processor locks entire cache line in order to atomically write to the object in it.
+# It doesn't matter if two different objects on the same cache line are shared or unshared!
+# This introduces a false sharing (ping-ponging), that we resolve by either memory padding or objects shuffling.
+
+# Is a shared read less expensive than a shared write?
+# It depends on the processor. Not on PowerPC which requires a hwsync instruction after a consistent read.
+
+# (1) Prefer isolation, including duplicating resources
+# (2) Otherwise, prefer immutability
+# (3) When cannot be avoided, use mutable shared state, but minimize touching it and false sharing
+
+
+
+# → USE THREADS CORRECTLY = ISOLATION + ASYNCHRONOUS MESSAGES
+# Threads are for expressing asynchronous work. They are a low-level tools. 'Up-level' them by replacing shared data with asynchronous messages.
+# Highly responsive threads should not perform significant work directly. Instead, use things such as: thread pool, asynchronous semantic, helper thread.
+# Example: GUI (pump-driven messages — priority queue).
+# Example: sockets (listeners — only accepts reads/connections, do work at different core/thread).
+# Example: pipeline stages (series of data to be processed in order).
+
+# Asynchronous work options:
+# dedicated background thread (when tasks need to run sequentially to each other)
+# background thread per task (when tasks are independent sequentially to each other)
+# run one-shot independent tasks on a thread pool (rent-a-thread for short non-blocking/waiting tasks)
+
+# (1) keep data isolated (no pointers to thread's private data)
+# (2) communicate among threads via asynchronous messages (keep their running independent)
+# (3) organize each thread's work around a message pump (most of the time they should respond to messages)
+
+
+
+# → USE THREAD POOLS CORRECTLY: KEEP TASKS SHORT AND NONBLOCKING
+# (1) tasks should be small, but not too small, otherwise performance overheads will dominate
+# we necessarily incur queueing overhead plus a context switch for running a task on a different thread than the original
+# (2) tasks should avoid blocking, otherwise the pool won't consistently utilize hardware well
+# (a) a thread pool should have one pool thread for each hardware core
+# (b) a thread pool should have one ready pool thread for each hardware core
+# not all threads are always ready to run (undersubscription)
+# reusing the idle pool' thread is unsafe in general; only one task at a time to completion is permitted
+# otherwise, there are a fancy ways to provide a deadlocks (e.g. via using thread-local state)
+# interleaving tasks are possible as an opt-in through POSIX swapcontext() or Windows fibers
+# the thread pool hast to be able to detect when it has more ready threads than cores, and retire one of the threads as soon as there's an opportunity
+# (3) tasks should avoid waiting for each other
+# for tasks that need a barrier or so, use standalone threads, not a thread pool
+# thread pools, in such cases, need to obtain at least N threads in the OS up to tasks completion
+
+
+
+# → ELIMINATE FALSE SHARING
+# The general case is to watch out for: hot-fields used by different threads, close in memory.
+# False sharing affects both writers and readers!
+# CPU monitors completely mask memory waiting by counting it as busy time.
+
+int result[P];                                                       // cache line ownership !
+for (int p=0; p<P; ++p) {
+    pool.run([&,p] {
+        result[p] = 0;                                               // int count = 0;
+        int chunkSize = DIM/P + 1;
+        int myStart = p * chunkSize;
+        int myEnd = std::min(myStart + chunkSize, DIM);
+        for (int i=myStart; i<myEnd; ++i) {
+            for (int j=0; j<DIM; ++j) {
+                if (matrix[i*DIM + j] % 2 != 0) {
+                    ++result[p];                                     // ++count;
+                }
+            }
+        }                                                            // result[p] = count;
+    });
+}
+pool.join();
+int odds = 0;
+for (int p=0; p<P; ++p) odds += result[p];
+
+# Eliminating false sharing ways:
+# (1) reduce the number of writes to the cache line 
+# (2) separate the variables so that they aren't on the same cache line
+# put intermediate results into a local variable
+# aligning: padding before the object and after the object
+
+template<typename T> struct cache_line_storage {
+    [[ align(CACHE_LINE_SIZE) ]] T data;
+    char pad[CACHE_LINE_SIZE > sizeof(T)] ? (CACHE_LINE_SIZE - sizeof(T)) : 1];
+};
+CACHE_LINE_SIZE = 16; // power of 2 from 16 to 512
+cache_line_storage<int> result[P];
+result[P].data = count;
+
+
+
+# → BREAK UP AND INTERLEAVE WORK TO KEEP THREADS RESPONSIVE
+# (1) use continuations
+# (2) use reentrant message pumping
+
+# Typical requirement: user thread must be responsive.
+# Continuation executes only a suitable-sized chunk of work ('we are saving our stack frame').
+# The overhead we're incurring: copy + queue push.
+# Beware state changes when interleaving: when the code resumes, it cannot in general assume that any data that is private to the thread, including thread-local variables, has remained unchanged across the interruption.
+
+class LongOperation : public Message {
+    Collection myItems;                                              // resilience to size changes
+    int start;
+    LongHelper helper;
+  public:
+    LongOperation(int start_ = 0, LongHelper helper_ = nullptr, Collection myItems_ = nullptr)
+        : start(start_), helper(helper_), myItems(myItems_) {}
+    void run() {
+        if (helper == nullptr) {
+            helper = GetHelper();
+            myItems.copy();                                          // take a snapshot of items
+        }
+        int i = 0;
+        for ( ; i<chunkSize && start+i < myItems.size(); ++i) {
+            helper->render(myItems[start+i]);
+        }
+        if (start+i < myItems.size()) {
+            queue.push(LongOperation(start+i, helper, myItems));     // launch a continuation
+        } else {
+            helper->print();                                         // finish up
+            free(myItems);
+        }
+    }
+};
+
+
+class LongOperation : public Message {
+  public:
+    void run() {                                                     // 'cooperative multitasking'
+        Collection myItems = items.copy();
+        LongHelper helper = GetHelper();
+        for (int i=0; i<myItems.size(); ++i) {
+            if (i % chunkSize == 0) {                                // from time to time
+                yield();                                             // yield-and-reenter
+            }
+            helper->render(myItems[i]);                              // OK to size changes
+        }
+        helper->print();
+        free(myItems);
+    }
+};
+
+void yield() {
+    int n = queue.size();
+    while (n-- > 0) {                                                // just pump n messages
+        message = queue.pop();                                       // don't: queue.size() in a loop
+        message.run();                                               // starvation possibility!
+    }
+}
+
+
+
+# → THE POWER OF 'IN PROGRESS'
+# 'Design out' long-running operations by splitting them up in to shorter operations.
+# Forcing other work to wait hurts both throughput and responsivness.
+# One way to do this is through continuations or reentrant functions.
+# Another way is to embrace incremential change: 'data + work pending'/'partially updated'.
+# Deferring work techniques: with finer granularity, asynchronously, lazily.
+
+# (1) data + pending changes           | queue as intentional first-class part of the data structure
+# (2) data + cookies                   | remainders for the current state, e.g. spell checking
+# (3) data + lazy evaluation           | on-demand loading, traversing a tree, recalculation, …
+
+# Key question: when and how to do the work?
+# interleaved (continuations, single tasks, …)
+# when idle and there is no other work to do (background threads)
+# asynchronously and concurrently with other work (background workers)
+# lazily on use
+
+
+
+# → DESIGN FOR MANYCORE SYSTEMS
+# Every chip needs to have a certain amount of concurrency available inside it to hide the RAM memory wall.
+# How do you hide latency? Briefly, by pipelining, out-of-order execution, etc. (concurrency).
+# If we remove out-of-order execution, we have to provide something else: hardware threads.
+# Hardware threads are important, but only for simpler cores.
+# Modern GPUs make each core very simple and relying on lots of hardware threads to keep the core doing useful work even in the face of memory latency.
+# Each core still has just one basic programming unit (AU, FPU) but can keep multiple threads of execution 'hot' and ready to switch quickly as others stall waiting for memory.
+# How many hardware threads should there be per core? As many as you need to hide the latency no longer hidden by other means.
+# How much scalability does your application need? sockets * cores/sockets * hardware_threads/core = app_concurrency
+
+
+
+# → AVOID EXPOSING CONCURRENCY: HIDE IT INSIDE SYNCHRONOUS METHODS
+# Where to start from to add concurrency to existing synchronous code?
+
+# Adding concurrency: target it, localize it, hide it.
+# hide concurrency inside 'synchronous' APIs
+# situations to look for: high-latency operations that can benefit from concurrent waiting, compute-intensive operations that can benefit from parallel execution
+# add concurrency internally in library functions in a style of 'synchronous fetch—parallel process'
+
+# (1) an internally parallelized algorithm
+# (2) optimistic iteration (two-staged pipeline)
+
+void quicksort(Iter first, Iter last)                      // sequential
+{
+    if (std::distance(first, last) < LIMIT) {              // if another type of sort is faster
+        other_sort(first, last);
+        return;
+    }
+    
+    Iter pivot = Partition(first, last);                   // pick a pivot and partition the data
+    quicksort(first, pivot);                               // recurse to sort the subranges
+    quicksort(pivot, last);
+}
+
+void quicksort(Iter first, Iter last)                      // parallelized
+{
+    if (std::distance(first, last) < LIMIT) {              // if synchronous sort is faster
+        other_sort(first, last);
+        return;
+    }
+    
+    Iter pivot = Partition(first, last);                   // pivot and partition synchronously
+    std::future fut = pool.run([=]{                        // sort subranges in parallel
+        quicksort(first, pivot); 
+    });
+    quicksort(pivot, last);
+    fut.join();                                            // if omitted: data race condition !
+}
+
+void f(WidgetCollection wc)                                // common calling code
+{
+    using (i = wc.get_enumerator()) {
+        while (i.move_next()) {                            // fetch next element
+            do_something_with(i.current);                  // and process it
+        }
+    }
+}
+
+class WidgetEnumerator {                                   // synchronous enumerator sketch
+    WidgetEnumerator() {}                                  // set up any necessary resources
+    void dispose() {}                                      // release any resources we got
+    
+    bool move_next() {
+        if (at_end()) return false;
+        navigate_to_next_item();                           // this may be an expensive operation
+        return true;
+    }
+    
+    Widget current() {
+        lock(myWidgetQueue) {
+            return myWidgetQueue.first;
+        }
+    }
+};
+
+class WidgetEnumerator {                                   // concurrent enumerator sketch
+    WidgetEnumerator() {
+        done = false;                                      // set up any necessary resources
+        pleaseStop = false;
+        myWidgetQueue.append(dummyItem);      
+
+        myWorker = new thread(()=>{                        // and launch a traversal worker thread
+            while (!pleaseStop && !at_end()) {
+                navigate_to_next_item();
+                lock (myWidgetQueue) { 
+                    myWidgetQueue.append(currentItem);
+                }
+                newItem.notify();                          // notify move_next() consumer
+            }
+            
+            lock(myWidgetQueue) {
+                myWidgetQueue.append(sentinelItem);
+            }
+            newItem.notify();
+        });
+    }
+    
+    void dispose() {
+        pleaseStop = true;                                 // stop and join the background worker
+        myWorker.join();                                   // then release any resources we got
+    }
+    
+    bool move_next() {                                     // two-staged pipeline !
+        if (!done) {
+            lock (myWidgetQueue) {
+                myWidgetQueue.pop_first();
+            }
+            newItem.wait();                                // wait for background producer
+        }
+        
+        lock (myWidgetQueue) {
+            if (myWidgetQueue.first == sentinelItem) {
+                done = true;
+                return false;
+            }
+            return true;
+        }
+    }
+    
+    Widget current() {
+        lock (myWidgetQueue) {
+            return myWidgetQueue.first;
+        }
+    }
+};
+
+
+
+# → PREFER STRUCTURED LIFETIMES - LOCAL, NESTED, BOUNDED, DETERMINISTIC
+# Object lifetimes in typical OO languages: constructor, followed by destructor/finalizer (called before returning from the scope).
+# Bounded, nested lifetime means that cleanup of a structured object is deterministic.
+# Other structured constructs are: using, try/finally, lock, dispose, barriers.
+
+# The major root of great care upon disposing/destruction is unstructured lifetimes.
+# Managing non-deterministic object lifetimes can be hard enough in sequential code, thus in parallel code it tends to be even harder.
+# Threads and tasks have unstructured lifetimes by default on most systems (non-local, non-nested, unbounded, non-deterministic).
+
+# Structured threads and task lifetimes are certainly possible with a dose of discipline.
+# Encapsulate and localize the concurrency.
+# Barrier provides synchronization between tasks if used correctly.
+
+
+
+# → PREFER FUTURES TO BAKED-IN 'ASYNC APIS'
+# When designing concurrent APIs, separate 'what' from 'how'.
+
+void caller_method() {
+    result = do_something(this, that, outTheOther);
+    other_work();                                          // if independent tasks, we want to enable…
+    more_other_work();                                     // concurrency for them
+}
+
+# (1) explicit begin/end (provide asynchronous version of the function)
+# (2) decouple 'what' from 'how' (use task launchers and futures)
+
+// this pattern depends on manual discipline for each API author to do it the same way each time
+// each API designer has to know in advance which method should support asynchronous calling
+// end_function() must be called even if we cancelling the task because it serves as a form of a dtor
+// begin_function() tends to grow with time, e.g. with a callback notification, identifying this call
+// this approach hardwires asynchronous call, i.e. we cannot choose how to run it (thread, pool, etc.)
+void caller_method() {
+    IAsyncResult ar = begin_do_something(this, that);      // launch
+    result = do_something(this, that, outTheOther);
+    other_work();                                          // run concurrently with do_something()
+    more_other_work();
+    ar.AsyncWaitHandle.wait_one();                         // join and wait
+    result = end_do_something(ar, outTheOther);
+}
+
+// use a separate general-purpose task launcher to launch the work
+// use futures to manage the asynchronous results
+// futures allows as to decouple the call (launch) from the receiving of the result (join)
+void caller_method() {
+    result = pool.run(()=>{                                // future value
+        do_something(this, that, outTheOther);             // the original synchronous API stays intact
+    });
+    other_work();                                          // runs concurrently with do_something() 
+    more_other_work();
+    result.wait();                                         // or use async(Task) instead of future
+}
+
+
+
+# → ASSOCIATE MUTEXES WITH DATA TO PREVENT RACES
+# We want to know which mutex covers which data. Make mutexes race-free by construction then.
+
+struct MyData {
+  public:
+    vector<int>& v() { assert(m_.is_held()); return v_; }  // data access
+    Widget* w() { assert(m_.is_held()); return w_; }
+    void lock() { m_.lock(); }                             // mutex access
+    bool try_lock() { return m_.try_lock(); }
+    void unlock() { m_.unlock(); }
+  private:
+    vector<int> v_;                                        // make this a TestableMutex<T>
+    Widget* w_;                                            // with the help of ::this_thread::get_id()
+    mutex_type m_;                                         // remember: M&M !
+};
+
+MyData data;
+lock_guard<MyData> hold(otherData);
+data.v().push_back(10);                                    // no lock aquired, will assert
+data.v().push_back(11);                                    // wrong lock held, will assert
+
+vector<int>* sneaky = nullptr;
+{                                                          // critical section
+    lock_guard<MyData> hold(data);
+    sneaky = &data.v();                                    // OK, not recommended
+    sneaky->push_back(12);                                 // OK, not checked
+}
+sneaky->push_back(13);                                     // data race, won't assert
+
+
+
+# → PREFER USING ACTIVE OBJECT INSTEAD OF NAKED THREADS
+# Active Object pattern allows us to automate: thread data isolation, communication between threads via asynchronous messages, organizing each thread's work around a message pump.
+
+# method calls on an Active object are always non-blocking asynchronous messages
+# private thread mainline is a message pump that dequeues and executes the messages one at a time
+# processing is atomic (messages are executed atomically)
+# we don't need a synchronization (the object's private data is only accessed from the private thread)
+
+class Active final {                                       // Active helper
+  public:
+    using Message = std::function<void()>;                 // first-class function messaging    
+
+    Active(const Active& rhs) = delete;                    // no copying
+    Active& operator=(const Active& rhs) = delete;
+
+    Active(Active&& rhs) noexcept = delete;                // no moving
+    Active& operator=(Active&& rhs) noexcept = delete;
+    
+    Active() : done(false), mq({}), thd(nullptr) {         // consider: using-with-resources
+        thd = std::unique_ptr<std::thread>(
+            new std::thread([=]{ this->run(); })           // run() is the thread mainline
+        );
+    }
+    
+    ~Active() {
+        send([&]{ done = true; });
+        thd->join();                                       // blocks from the caller view
+    }
+    
+    void send(Message m) {                                 // enqueues work, nonblocking call
+        mq.send(m);
+    }
+    
+  private:
+    void run() {
+        while(!done) {                                     // the dispatch loop
+            Message msg = mq.receive();
+            msg();                                         // execute message
+        }                                                  // last message sets done=true
+    }
+  
+    bool done;                                             // message pump sentinel
+    MessageQueue<Message> mq;                              // thread-safe (internally synchronized)
+    std::unique_ptr<std::thread> thd;                      // consider: thread pool size 1    
+};
+
+class Backgrounder {                                       // Active object
+  public:
+    void save(const std::string filename) {
+        a.send( [=]{ } );                                  // save document as NIO
+    }
+    
+    void print(const Data& data) {
+        a.send( [=, &data]{ } );                           // print document as NIO
+    }
+    
+  private:
+    PrivateData some_private_state_across_calls;           // if desired
+    Active a;                                              // goes last for ordered destruction
+};
+
+class MessageQueue {                                       // naive approach
+  public:
+    typedef std::function<void()> Message;
+    
+    void send(const Message& msg) {
+        boost::unique_lock lock(m_mutex);
+        m_queue.push_back(msg);
+        m_cond.notify_all();
+    }
+    
+    Message receive() {
+        boost::unique_lock lock(m_mutex);
+        while (m_queue.empty()) m_cond.wait(lock);
+        const Message msg = m_queue.front();
+        m_queue.pop_front();
+        return msg;
+    }
+
+  private:
+    std::deque<Message> m_queue;
+    boost::mutex m_mutex;                                  // M&M !
+    boost::condition_variable m_cond;
+};
+
+
+
+# → PREFER USING FUTURES OR CALLBACKS TO COMMUNICATE ASYNCHRONOUS RESULTS
+# We want to use Active features with returning result to the caller
+# How callers can pull results and how callee can push them?
+
+# (1) return a future — caller pulls
+# (2) return a future and notify — caller converts pull into push (ContinueWith)
+# (3) accept an event or a callback — callee pushes proactively
+# (4) use a message queue or callbacks to get multiple or interim results
+
+class MyGUI {                                                        // Example 1
+  public:
+    void onSaveClick() {
+        std::future<bool> result = backgrounder.save(filename);
+        use(result.get());                                           // caller pulls
+    }
+  private:
+    Backgrounder backgrounder;
+};
+
+class Backgrounder {
+  public:
+    std::future<bool> save(std::string filename) {                   // callee pushes
+        auto p = std::make_shared<std::future<bool>>();
+        std::future<bool> ret = p->get_future();
+        a.send([=]{ p->set_value( didItSucceed() ); });
+        return ret;
+    }
+  private:
+    Active a;
+};
+
+
+class MyGUI {                                                        // Example 2
+  public:
+    void onSaveClick() {                                             // caller pulls & async push
+        turnOnSaving();
+        shared_future<bool> result;                                  // prefer ContinueWith technique
+        result = backgrounder.save(filename);                        // 2 threads, 1 waits at start!
+        async([=]{ sendSaveComplete(result->get()); });              // event-driven notification
+    }
+    void onSaveComplete(bool returnedValue) {
+        turnOffSaving();
+    }
+};
+
+
+class Backgrounder {                                                 // Example 3
+  public:
+    void save(string filename, function<void(bool)> retCallback) {   // all callbacks run on
+        a.send([=]{ doSave(); retCallback(didItSucceed()); });       // callee's thread !
+    }
+};
+
+class MyGUI {
+  public:
+    void onSaveClick() {
+        turnOnSaving();
+        shared_future<bool> result;
+        result = backgrounder.save(filename, [=]{ sendSaveComplete(result->get()); });
+    }
+    void onSaveComplete(bool retValue) {
+        turnOffSaving();
+    }
+};
+
+
+class Backgrounder {                                                 // Example 4
+    future<PrintStatus> print(const Data& data, function<void(PrintInfo)> statusCallback) {
+        auto p = make_shared<promise<PrintStatus>>();
+        future<PrintStatus> ret = p->get_future();
+        a.send([=, &data;]{
+            PrintInfo info;
+            while (!isDataFormattingDone()) {
+                info.setPercentDone(percentDone);
+                statusCallback(info);                                // interim status
+                continuePrinting();
+            }
+            p->set_value(finalResult);
+            info.setPercentDone(100);
+            statusCallback(info);                                    // final interim status
+        });
+        return ret;
+    }
+};
+
+class MyGUI {
+    void onPrintClick() {
+        turnOnPrinting();
+        shared_future<PrintStatus> result;
+        result = backgrounder.print(theData, [=](PrintInfo pi){ sendPrintInfo(pi, result); });
+    }
+    void onPrintInfo(PrintInfo pi, shared_future<PrintStatus> result) {
+        progressBar.set(pi.percentDone);
+        if (result.is_ready() || pi.percentDone == 100) {
+            turnOffPrinting();
+        }
+    }
+};
+
+
+
+# → KNOW WHEN TO USE AN ACTIVE OBJECT INSTEAD OF A MUTEX
+# Active object can be used as a replacement of a mutex
+# Guideline: if you have high-contention and/or high-latency shared state, especially I/O, perfer to make it asynchronous
+
+# Consider a use case: logger file serialization
+# (1) using a mutex, possibly with checked accessors (bind a mutex with the data)
+# (2) use asynchronous buffering via message queue (writing to a log may now interleave)
+# (3) use an Active Object to encapsulate the resource (more natural, automatic shutdown)
+
+class AsyncLogFile {
+  public:
+    void write(std::string str) {                // implicit asynchronous buffering
+        a.send([=]{ log.write(str); });          // implicit serialization: ops are performed in order
+    }
+  private:
+    File log;
+    Active a;                                    // active helper
+};
+
+AsyncLogFile logFile;                            // active object
+logFile.write(info);                             // each caller uses it directly
+
+
+

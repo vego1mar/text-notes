@@ -1,0 +1,3092 @@
+/// linux: currently running distro version
+cat /etc/os-release
+cat /etc/issue
+hostnamectl                                   # systemd
+lsb_release -a                                # distribution-specific information
+%%
+
+
+/// linux: kernel version
+uname -r
+%%
+
+
+/// linux disks filesystem hardware: partition mount options
+grep '/dev/sd' /proc/mounts
+mount | grep '/dev/sd'
+cat /etc/fstab                                # mounts in effect
+cat /etc/mtab | grep '/dev/sd'                # attempted mounts
+%%
+
+
+/// linux disks filesystem hardware: partition UUID
+# UUID: Universally Unique Identfier
+# On Windows known also as GUID — Globally Unique Identifier.
+
+ls -l /dev/disk/by-uuid/ | cut -d ' ' -f10-12
+lsblk --fs | grep -v 'loop'
+blkid | grep -v 'loop'                        # it replaces vol_id
+blkid /dev/sdb6 -sUUID -ovalue                # "7029f93d-6ad4-4b27-9373-a6257d6566f3"
+%%
+
+
+/// linux disks filesystem hardware: mount partition by UUID
+PUUID=7029f93d-6ad4-4b27-9373-a6257d6566f3
+sudo mkdir -p /media/kassandra/$PUUID
+sudo mount --uuid $PUUID /media/kassandra/$PUUID
+sudo umount /dev/disk/by-uuid/$PUUID
+sudo rmdir /media/kassandra/$PUUID
+%%
+
+
+/// linux disks filesystem hardware: mount partition using system-independent options
+# The options order does matter.
+# Option 'user' allows any user to mount the selected partition.
+
+sudo mkdir -p /mnt/disk-sdb6
+sudo mount -t ext4 -o ro,nosuid,nodev,relatime /dev/sdb6 /mnt/disk-sdb6
+sudo umount /dev/sdb6
+%%
+
+
+/// linux hardware filesystem: mount external disk
+sudo fdisk -l
+sudo mkdir -p /media/mydisc && mount /dev/sda1 /media/mydisc
+%%
+
+
+/// files: find their paths
+find . -name "*.txt"
+find / -name art 2>&1 | grep -v "Permission denied"
+find / -name art |& grep -v "Permission denied"
+%%
+
+
+/// files: find text in their content
+# w: whole words
+# R: recursive + follow symlinks
+
+grep -rw 'text'
+grep -rw 'text' /path/to/search/into
+grep -Rni --exclude-dir={Private,Personal} --include={*.txt,*.js} 'text' ~/Documents
+grep -rnw '/path/to/somewhere/' -e 'pattern'
+%%
+
+
+/// files: display lines in range
+head -79 textfile | tail +77
+sed -n '77,79p' textfile
+awk 'NR>=77 && NR<=79' textfile
+%%
+
+
+/// linux hardware: monitor refresh rate
+# This change is not permanent (lasts for user session).
+xrandr --output DP-0 --mode 2560x1080 --rate 200
+
+xrandr                                        # available modes
+xrandr -s 1440x900 -r 75                      # * used
+xrandr -r 75                                  # + preferred
+xrandr
+
+# Calculate modeline 1600x900 (75 Hz)
+cvt 1600 900 75
+xrandr --newmode "1600x900_75.00"  104.00  1600 -hsync +vsync
+xrandr --verbose --addmode VGA-0  "1600x900_75.00"
+xrandr --output VGA-0 --mode "1600x900_75.00"
+
+# Calculate modeline 2560x1080 (200 Hz)
+cvt 2560 1080 200
+# 2560x1080 199.92 Hz (CVT) hsync: 243.30 kHz; pclk: 872.00 MHz
+# Modeline "2560x1080_200.00"  872.00  2560 2792 3072 3584  1080 1083 1093 1217 -hsync +vsync
+xrandr --newmode "2560x1080_200.00"  872.00  2560 2792 3072 3584  1080 1083 1093 1217 -hsync +vsync
+xrandr --verbose --addmode DP-0  "2560x1080_200.00"
+xrandr --output DP-0 --mode "2560x1080_200.00"
+
+sudo apt-get install compizconfig-settings-manager
+%%
+
+
+/// network database issue: 'XAMPP: Another web server is already running'
+sudo /etc/init.d/apache2 stop
+sudo /etc/init.d/mysql stop
+sudo /etc/init.d/proftpd stop
+sudo /opt/lampp/lampp restart
+sudo netstat -tunap | grep LISTEN
+%%
+
+
+/// linux hardware: hardware information
+lscpu                                         # list processing units
+lshw                                          # list hardware units
+lshw -short
+hwinfo                                        # hardware info
+hwinfo --short
+lsmod                                         # list kernel modules from /proc/modules
+lspci                                         # list PCI buses
+lsscsi                                        # list SCSI devices
+lsusb                                         # list USB buses and devices
+inxi -Fx                                      # hardware report
+lsblk                                         # list block/storage devices
+df -H                                         # disk file systems
+pydf                                          # Python df
+sudo fdisk -l                                 # partition information
+mount | column -t                             # mounted file systems
+sudo dmidecode | less                         # SMBOIS data structure (DMI tables)
+cat /proc/cpuinfo
+cat /proc/meminfo
+cat /proc/version
+cat /proc/scsi/scsi
+cat /proc/partitions
+blkid                                         # UUID for partitions
+
+sudo hdparm -I /dev/sda                       # ATA/SATA devices
+dmesg | grep 'SATA'
+
+free -m                                       # RAM info
+sudo dmidecode --type memory | less
+%%
+
+
+/// linux hardware: power management
+systemctl suspend                             # standby, suspend, suspend-to-RAM
+systemctl hibernate                           # suspend-to-disk
+systemctl hybrid-sleep                        # suspend to RAM and disk
+
+
+# 1: execute commands and custom scripts
+# 2: terminate all services and processes
+# 3: power-off the system using ACPI and PSU signals
+# 4: power-on the system and boot it in default target state
+
+halt                                          # 2
+systemctl halt
+shutdown -H now
+
+poweroff                                      # 2+3
+systemctl poweroff
+shutdown -P now
+
+shutdown                                      # 1+2+3
+systemctl poweroff
+
+reboot                                        # 1+2+3+4
+shutdown -r
+systemctl reboot
+%%
+
+
+/// linux desktop-environment: restart x11 server
+systemctl restart display-manager.service
+%%
+
+
+/// ubuntu desktop-environment: Deepin DDE
+# This package conflicts with elementaryOS desktop environment that need libgranite.
+
+# Installation
+sudo apt-get update
+sudo apt-get upgrade
+sudo add-apt-repository ppa:ubuntudde-dev/stable
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install ubuntudde-dde
+reboot
+
+# Deinstallation
+sudo apt remove '~ndde-.*' '~ndeepin-.*' startdde ubuntudde-dde '~nxscreensaver-.*'
+sudo apt autoremove
+sudo add-apt-repository --remove ppa:ubuntudde-dev/stable
+reboot
+%%
+
+
+/// linux hardware: wireless card
+lspci | grep -i wireless                      # WiFi driver chipset info, first value: '02:00.0'
+lspci -vv -s 02:00.0                          # 'Kernel modules: ath10k_pci'
+modinfo ath10k_pci                            # driver information
+lspci -n -s 02:00.0                           # vendor & product code
+lspci -nn -s 02:00.0
+sudo update-pciids
+lspci | egrep -i 'wifi|wireless|intel|broadcom|realtek'
+lspci -k | less
+lshw -C network
+lshw -C network | grep -B 1 -A 12 'Wireless interface'
+lsusb
+lsmod | less
+lsmod | grep -i wifi                          # USB WiFi device
+lsmod | grep -i huawei                        # 'huawei_cdc_ncm, cdc_wdm, cdc_ncm, usbnet'
+modinfo usbnet
+%%
+
+
+/// string: length
+mystring='abhishek'
+echo '${#mystring}'                           # bash
+expr length "$mystring"                       # expr
+echo "$mystring" | awk '{print length}'       # awk
+echo -n "$mystring" | wc -m                   # wc
+%%
+
+
+/// linux: graphics card
+lspci -k | grep -EA2 'VGA|3D|Display'         # 'Kernel driver in use: amdgpu'
+lspci | grep -E 'VGA|3D'
+sudo lspci -v | grep 'VGA' -A 12
+lshw -C 'Display'
+modinfo amdgpu
+
+modinfo nvidia | grep '^version'              # driver version
+lsmod | grep 'nvidia'
+dpkg --get-selections | grep 'nvidia'
+nvidia-settings                               # NVIDIA X Server Settings
+nvidia-smi                                    # NVIDIA System Management Interface
+
+
+# Ubuntu only
+ubuntu-drivers devices                        # available drivers
+software-properties-gtk --open-tab=4          # Ubuntu:/Show Applications/Software & Updates/Additional Drivers
+%%
+
+
+/// ubuntu: dock background opacity
+gsettings set org.gnome.shell.extensions.dash-to-dock transparency-mode 'FIXED'
+gsettings set org.gnome.shell.extensions.dash-to-dock background-opacity 0.5
+gsettings set org.gnome.shell.extensions.dash-to-dock intellihide false
+
+gsettings reset org.gnome.shell.extensions.dash-to-dock background-opacity
+gsettings reset org.gnome.shell.extensions.dash-to-dock background-opacity
+
+sudo apt install dconf-editor
+dconf-editor:/org/gnome/shell/extensions/dash-to-dock/background-opacity
+%%
+
+
+/// steamcmd
+# https://developer.valvesoftware.com/wiki/Command_Line_Options
+# https://github.com/dgibbs64/SteamCMD-Commands-List/blob/master/steamcmdcommands.txt
+
+steamcmd
+login login my_password                       # Steam user, not profile name
+@sSteamCmdForcePlatformType windows
+set_download_throttle 10000
+force_install_dir "/media/sol/Archiwum/Tmp/"
+app_update 208650 validate                    # AppID; https://steamdb.info/app/208650/
+quit
+%%
+
+
+/// files: display line numbers
+cat text_file | grep -n '' | less
+cat text_file | less -N
+cat ./primer-ubuntu | grep -n '^///' | grep 'Steam' | sed 's/:.*//'
+cat ./primer-ubuntu | grep -n '^///' | grep -i 'install' | sed 's/\/\/\/ //'
+%%
+
+
+/// string: cut via delimiter
+echo "some string: with a colon" | cut -d: -f1
+echo "some string: with a colon" | awk -F: '{print $1}'
+echo "some string: with a colon" | sed 's/:.*//'
+# "some string"
+%%
+
+
+/// string: reverse
+echo "Jak żyć?" | rev
+echo "///home/user/" | rev | cut -c-11 | rev
+%%
+
+
+/// mpv
+mpv --audio-pitch-correction=yes --speed=1.0 --hwdec=auto video.mp4
+mpv --no-border --hwdec=vdpau --vo=opengl video.mp4
+mpv --hwdec=vdpau --vo=gpu video.mp4
+mpv --vo=caca video.mp4
+mpv --keep-open=always --quiet video.webm
+mpv --audio-display=no song.flac
+mpv --keep-open=always --quiet --ao=alsa --force-window=yes --autofit=1400x900 --osd-font='Rubik' --screenshot-template=%02n --msg-level=all=status --start=0:0 --speed=1.0 song_or_video.file
+
+# Search for other vo's:
+man mpv | grep -n 'VIDEO OUTPUT DRIVERS'      # "5972:VIDEO OUTPUT DRIVERS"
+man mpv | grep -n '' | tail +5972 | less
+%%
+
+
+/// mpv: mpv.conf
+/etc/mpv/mpv.conf                             # system-wide
+/usr/local/etc/mpv.conf                       # system-wide
+~/.config/mpv/mpv.conf                        # user-specific
+
+
+# mpv.conf:
+vo=gpu                                        # video output (renderer)
+hwdec=auto                                    # hardware decoder
+
+save-position-on-quit                         # playback video position (video position on a time bar)
+border=yes                                    # windows title bar
+msg-color=yes                                 # log messages on terminal
+msg-module=yes                                # log messages module name on terminal
+term-osd-bar=yes                              # progress bar on terminal
+osd-font='Ubuntu'
+osd-font-size=24
+audio-pitch-correction=yes                    # insert scaletempo when playing with higher speed
+volume-max=200                                # aplification for everything above 100 %
+volume=100
+
+override-display-fps=60                       # motion interpolation section
+video-sync=display-resample
+interpolation=yes
+tscale=oversample                             # smoothmotion
+# end mpv.conf
+%%
+
+/// mpv: live stream
+yt-dlp https://www.youtube.com/watch?v=Z7JspfBPpX4 --quiet -f worst -o - | mpv --quiet --title='Strumienie z Ruczaju' --hwdec=vdpau --vo=gpu --audio-pitch-correction=yes --keep-open=always -
+yt-dlp https://www.youtube.com/watch?v=TAqVsCeAweA --quiet -f worst -o - | mpv --keep-open=always --quiet --ao=alsa --force-window=yes --ontop --autofit=1400x900 --osd-font='Ubuntu' --screenshot-template=%02n --msg-level=all=status --start=0:0 --speed=1.0 -
+yt-dlp https://www.twitch.tv/bonkol --quiet -S 'res:240' -o - | mpv --quiet --hwdec=auto --vo=gpu -
+
+yt-dlp --format=22 --embed-metadata -o '[%(channel)s] %(title)s.%(ext)s' -P ~/msi-ms7996/roboczy/__video/ https://www.youtube.com/watch?v=xpf3KQBIoCY
+yt-dlp --list-formats https://www.youtube.com/watch?v=xpf3KQBIoCY
+%%
+
+
+/// rsync
+rsync -avrh --progress /source_dir /target_dir
+rsync -avrh --progress --delete /source_dir /target_dir
+rsync -avrh --progress --delete --dry-run /source_dir /target_dir | less
+
+rsync --archive --verbose --recursive --human-readable --delete --checksum --links --dry-run /source_dir /target_dir
+rsync -rcv --delete --links --dry-run /dir1/ /dir2/ > diff2.txt
+rsync -avr --delete --checksum /home/moon/Roboczy/ '/media/moon/MAXELL HDD/MSI-MS-7996/Roboczy/'
+rsync -avrh --delete --progress ./Maszyny_wirtualne/ /media/amana/386407ee-f7b9-4feb-9332-f84151ba34f3/Maszyny_wirtualne/
+%%
+
+
+/// linux: run levels
+systemctl get-default
+systemctl set-default multi-user.target
+
+#  level    systemd target       mode
+#  0        poweroff.target      halt (shuts down system)
+#  1        rescue.target        single-user mode (no network, daemons, non-root logins)       
+#  2        multi-user.target    multi-user mode (no network service and start daemons)
+#  3        multi-user.target    multi-user mode with networking
+#  4        multi-user.target    undefined (not used, user-definable)
+#  5        graphical.target     X11 (runlevel 3 + X Window display manager)
+#  6        reboot.target        reboots the system
+
+ls -ls /etc/rc4.d/ | less                     # starting scripts for runlevel 4
+sudo telinit 4                                # changing SysV runlevel to 4
+cat /etc/inittab                              # SysV
+man inittab                                   # Upstart
+man runlevel                                  # systemd
+who -r                                        # runlevel of logged in user
+runlevel                                      # current runlevel
+%%
+
+
+/// virtualbox: shared folders
+sudo cat /etc/shadow | grep moon              # user=moon
+cd /media/moon/VBox_GAs_5.2.20/               # VBoxGuestAdditions.iso
+sudo ./VBoxLinuxAdditions.run
+sudo adduser moon vboxsf                      # add user 'moon' to group 'vboxsf'
+reboot --reboot
+cd /media/moon/VBox_GAs_5.2.20/
+sudo ./VBoxLinuxAdditions.run
+cd /media/sf_Roboczy/                         # shared folder path
+%%
+
+
+/// virtualbox: guest additions
+sudo ./VirtualBox-6.1.26-145957-Linux_amd64.run
+sudo VBoxManage extpack install --accept-license=$(sha256sum Oracle_VM_VirtualBox_Extension_Pack-6.1.26.vbox-extpack | cut -c-64) --replace Oracle_VM_VirtualBox_Extension_Pack-6.1.26.vbox-extpack
+%%
+
+
+/// archives files: extract
+sudo mkdir /opt/intellij-idea
+sudo tar xfz ideaIC-2018.2.5.tar.gz -C /opt/intellij-idea/
+sudo chown user /opt/intellij-idea
+
+sudo mkdir /opt/sonarqube-utils/
+sudo chown user /opt/sonarqube-utils/
+7z x sonar-scanner-cli-3.2.0.1227-linux.zip -o/opt/sonarqube-utils/
+7z x build-wrapper-linux-x86.zip -o/opt/sonarqube-utils/
+
+unzip '*.zip'
+unzip ./gnirehtet-rust-linux64-v2.5.zip -d /opt/kassandra/
+
+cat *.tar.gz | tar zxf - -i                                             # extract all *.tar.gz
+ls *tar.xz | xargs -n 1 tar -xf                                         # extract all *.tar.xz
+unzip '*.zip' 2>&1 > /dev/null                                          # extract all *.zip
+find . -maxdepth 1 -type d -print0 | xargs -0 mv -t ~/.icons/           # move the content to ~/.icons/
+%%
+
+
+/// driver install: nvidia proprietary driver
+who -r
+runlevel
+sudo nano /boot/grub/grub.cfg // &&>> cat " 3"
+reboot
+sudo ./NVIDIA-Linux-x86_64-410.73.run
+sudo nano /boot/grub/grub.cfg // &&>> cat ""
+reboot
+%%
+
+
+/// apt: downloaded packages
+ls -1 /var/cache/apt/archives/ | wc -l                                # number of regular files
+du -sh /var/cache/apt/archives/                                       # folder size
+
+du -sh /var/cache/apt/archives/ |& grep -v 'Permission denied'
+ls -lshtF /var/cache/apt/archives/ | less -N
+%%
+
+
+/// git
+git config --global user.email "you@example.com"
+git config --global user.name "moon"
+
+#  Working dir   current files
+#  INDEX         stage (lounge)
+#  HEAD          last created commit
+
+git init                                      # new repository
+git clone /path/to/repository                 # downloading repository
+git clone username@host:/path/to/repository
+git add <filename>                            # adding changes to INDEX
+git add *
+git commit -m "Commit message"                # adding changes to HEAD (locally)
+git push origin master                        # confirming changes (remotely)
+git push <remote-server> <branch>
+git remote add origin <server>                # remote connection
+git checkout -b feature_x                     # create branch if not created
+git checkout master                           # switch to branch 'master'
+git branch -d feature_x
+git push origin <branch>
+git pull                                      # update repository (fetch & merge)
+git merge <branch>                            # combining branches together
+git diff <source_branch> <target_branch>      # resolving conflicts
+git add <filename>
+git tag 1.0.0 1b2e1d63ff                      # tagging (versioning)
+git tag <tag_name> <commit_number>            # repository history (log)
+git log
+git log --author=bob
+git log --pretty=oneline
+git log --graph --oneline --decorate --all
+git log --name-status
+git log --help
+git checkout -- <filename>                    # rollback changes
+git fetch origin                              # revoke changes
+git reset --hard origin/master
+gitk                                          # built-in GUI for git
+git config color.ui true                      # coloured output
+git config format.pretty oneline              # history entry as one-liner
+git add -i                                    # interactive adding
+
+git init
+cd /media/moon/MAXELL\ HDD/MSI-MS-7996
+git checkout -b roboczy
+cp -ru /home/moon/Roboczy/ /media/moon/MAXELL\ HDD/MSI-MS-7996/Roboczy
+git add Roboczy/
+git stage ${deleted}
+git commit -m "Standard backup"
+git log --graph --oneline --decorate --all
+%%
+
+
+/// git: branches list
+git branch -a                                 # local & remote
+git branch -r                                 # remote
+git show-branch                               # git log + branches names
+%%
+
+
+/// git: handling mistakes
+git checkout HEAD DeletedFile.js              # restores deleted file
+
+git checkout HEAD AlteredFile.js              # rejects changes in a file
+git checkout -patch index.js                  # rejects lines of code (interactive mode)
+git reset --hard HEAD                         # rejects all local changes
+
+# How to revert uncommitted changes?
+git reset --hard                              # back to HEAD
+git clean -fd                                 # remove files and directories
+
+# How to discard unstaged changes? ↑
+git checkout -- .                             # revert changes in the CWD
+
+git stash                                     # brings back the state to the HEAD
+git stash drop
+
+# How to undo an approved commit?
+# We have commit chain: … → C1 → C2 → C3 → … ; the goal is to remove C2 only
+git log                                       # obtain a hash of a git commit → 9130cf1
+git revert 9130cf1                            # a new commit that revert changes done by 9130cf1
+
+# How to roll back changes to an old commit?
+git log --graph --oneline                     # commit hash → 13928jj3ef
+git reset --hard 13928jj3ef                   # backward move to 13928jj3ef
+git commit                                    # apply changes
+
+# How to restore deleted commits?
+git reflog                                    # see all of the untracked commits
+git reset --hard 01428ej2ee
+%%
+
+
+/// linux deinstall: kernel for ubuntu
+uname -r                                      # DO NOT REMOVE THIS KERNEL!
+dpkg --list | grep linux-image                # installed kernels
+sudo apt-get purge linux-image-x.x.x-x-generic 
+sudo update-grub2 
+reboot
+
+sudo apt install synaptic                     # an alternative
+sudo apt autoremove                           # it'll leave one version as a fallback
+%%
+
+
+/// linux install: kernel for ubuntu
+# For 64-bit OS download files from http://kernel.ubuntu.com/~kernel-ppa/mainline/: 
+# linux-headers-xxxxxx-generic-xxxxxx_amd64.deb
+# linux-headers-xxxxxx_all.deb
+# linux-image-xxxxxx-generic-xxxxxx_amd64.deb
+
+sudo dpkg -i *.deb
+reboot
+%%
+
+
+/// qpdf: apply a password
+qpdf --encrypt user-password owner-password 256 -- in.pdf out.pdf
+shred --iterations=23 --remove in.pdf
+%%
+
+
+/// deepin: custom login screen wallpaper
+# Copy wallpaper 16.jpg into /usr/share/wallpapers/deepin.
+# A fixed name file like 192dc9abbc741b404b5c7c2d9a3b123c.jpg will appear in /var/cache/image-blur.
+# The custom wallpaper will be blacked or blured.
+# Replace it with 16.jpg but preserve the fixed name.
+
+sudo cp ~/Documents/Roboczy/16.jpg /usr/share/wallpapers/deepin/
+sudo cp ~/Documents/Roboczy/16.jpg /var/cache/image-blur/192dc9abbc741b404b5c7c2d9a3b123c.jpg
+%%
+
+
+/// ubuntu: custom lock screen wallpaper
+# https://extensions.gnome.org/extension/1476/unlock-dialog-background/
+sudo apt install gir1.2-clutter-1.0
+gnome-tweaks:/Extensions/Lock screen background
+
+gnome-tweaks:/Appearance/Lock Screen/Image
+cp my-wallpaper.png /usr/share/backgrounds/warty-final-ubuntu.png
+
+sudo apt install libglib2.0-dev
+wget github.com/thiggy01/change-gdm-background/raw/master/change-gdm-background
+chmod u+x change-gdm-background
+sudo ./change-gdm-background ~/Pictures/tree.jpg
+sudo ./change-gdm-background --restore
+%%
+
+
+/// ffmpeg: merge video and audio streams (MPEG-DASH)
+# In case of MP4 format (all, except 1440p 60fps & 2160p 60fps):
+ffmpeg -i videoplayback.mp4 -i videoplayback.m4a -c:v copy -c:a copy output.mp4
+
+# In case of WebM format (all, except 1440p 60fps and 2160p 60fps):
+ffmpeg -i videoplayback.webm -i videoplayback.m4a -c:v copy -c:a copy output.mkv
+
+ffmpeg -i videoplayback.m4a -ab 128000 -vn music.mp3
+ffmpeg -i video.webm -i audio.m4a -c:v libx264 -c:a copy out.mp4
+%%
+
+
+/// ffmpeg: convert mp4/webm to ogg
+ffmpeg -i input_video.mp4 -vn -acodec libvorbis -y output_audio.ogg
+ffmpeg -i input_video.webm -vn -y output_audio.ogg
+%%
+
+
+/// linux virtual-machine: is this a virtual machine?
+# DMI: Desktop Management Interface
+
+sudo dmidecode -s system-manufacturer         # 'innotek Gmbh' for virtualbox
+$ MSI
+%%
+
+
+/// files: display the difference between the two
+diff file1 file2
+diff --color --side-by-side file1.txt file2.txt
+%%
+
+
+/// linux: init system
+ps -p 1 -o comm=
+%%
+
+
+/// ubuntu: memory cache
+sync && echo 3 | sudo tee /proc/sys/vm/drop_caches         # cleaning cache
+%%
+
+
+/// fonts: paths
+sudo apt install font-manager
+sudo apt install typecatcher
+
+~/.fonts                                                   # typecatcher
+~/.local/share/fonts                                       # local
+/usr/local/share/fonts                                     # global
+%%
+
+
+/// fonts: list
+fc-list | less
+fc-list --brief | less
+fc-list --verbose | less
+fc-list : family style | less
+fc-list : family > available_fonts.txt
+fc-list :lang=pl family > fonts_with_faces_that_covers_polish.txt
+%%
+
+
+/// files: number of them in a directory
+find . -type f | wc -l                        # only files
+find ~/.local/share/fonts -type f | wc -l
+find . -maxdepth 1 -type f | wc -l            # no subdirectories
+
+ls -p | grep -v / | wc -l                     # only files (+symlinks)
+ls | wc -l
+ls -1A | wc -l                                # with hidden files
+ls -1 | wc -l                                 # without hidden files
+
+sudo apt install tree -y
+tree -a | tail                                # files + folders + subfolders
+tree -a -L 1                                  # level of recursion
+%%
+
+
+/// files: regular files list
+# Regular means that file is nothing special, like: 
+# symbolic link, pipe, Solaris door, null, socket, bit mask, block device, character device
+
+test -f ~/.bash_history && echo 'regular'
+stat ~/.bash_history
+file /dev/null
+file /etc/passwd
+file ~/.bash_history
+
+
+ls -p | grep -v /                             # non-hidden non-directories (e.g. devices)
+find . -maxdepth 1 -type f
+ls -al | grep '^-'                            # regular files (r.f.) only
+ls -al | grep '^[-l]'                         # r.f. with links, either to file or directory
+
+run-parts --list --regex '^p.*d$' /etc        # including queues and links to files
+run-parts --list --regex '^.*$' .             # Debian only
+
+ls -aF | grep -v '[/@=|]$' | more             # appends / to directories
+ls -F                                         # appends @ to symbolic links
+ls --classify                                 # appends * to executables
+                                              # appends = to sockets
+                                              # appends | to FIFOs
+                                              
+  
+for f in *; do [ -f $f ] && echo "$f"; done;  # not for file names with spaces
+
+touch "some file name"
+ls -al | grep '^-' | awk '{print $9}'
+ls -al | grep '^-' | awk '{ for(i=9; i<=NF; ++i) printf $i""FS; print "" }'
+%%
+
+
+/// disks hardware filesystem: drive bad sectors
+sudo apt install smartmontools
+sudo smartctl -H /dev/sda5
+sudo badblocks -v /dev/sda5 > badsectors.txt
+sudo e2fsck -l badsectors.txt /dev/sda5       # ext4
+sudo fsck -l badsectors.txt /dev/sda5
+sudo e2fsck -y -c /dev/sda7
+%%
+
+
+/// filesystem: fix errors within NTFS file system
+sudo apt-get install ntfs-3g ntfsprogs
+sudo ntfsfix /dev/sda7
+%%
+
+
+/// linux swap: set swap file/partition
+sudo swapoff -a
+cat /proc/swaps                               # working swap partitions
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile                         # swap file
+sudo mkswap -c /dev/sda6                      # swap block device
+sudo swapon --all
+sudo echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+%%
+
+
+/// linux swap: resize swap file
+swapon --show
+sudo swapoff /swapfile
+sudo fallocate -l 8G /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+free -h
+%%
+
+
+/// bootloader filesystem: is ESP mounted? is EFI used?
+# ESP: EFI System Partition
+
+mount | grep /boot/efi
+lsblk -o NAME,PARTTYPE,MOUNTPOINT | grep -i "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+sudo fdisk -l | grep 'EFI System'
+%%
+
+
+/// grub bootloader issue: "error: symbol 'grub_file_filters' not found"
+boot-repair-disk                              # live distribution alternative approach
+
+sudo su                                       # become a 'root'
+fdisk -l                                      # locate Linux partition; '/dev/sda1'
+mount /dev/sda1 /mnt                          # mount manually system directories
+mount --bind /dev /mnt/dev
+mount --bind /dev/pts /mnt/dev/pts
+mount --bind /proc /mnt/proc
+mount --bind /sys /mnt/sys
+chroot /mnt                                   # new root directory
+grub-install /dev/sda                         # device that possess 'sda1' partition
+exit                                          # exiting 'chroot'
+umount /mnt/dev/pts
+umount /mnt/dev
+umount /mnt/proc
+umount /mnt/sys
+umount /mnt
+reboot
+%%
+
+
+/// grub bootloader issue: GRUB rescue for ESP
+# https://www.pcsuggest.com/grub-rescue-linux/
+
+sudo mkdir -p /mnt/chroot
+sudo mount /dev/sda2 /mnt/chroot/
+sudo mount /dev/sda1 /mnt/chroot/boot/efi
+sudo -i                                                    # 'root' for live session
+mount -B /dev/ /mnt/chroot/dev/
+mount -B /dev/pts/ /mnt/chroot/dev/pts/
+mount -B /proc/ /mnt/chroot/proc/
+mount -B /sys/ /mnt/chroot/sys/
+chroot /mnt/chroot/
+sudo grub-install /dev/sda --target=x86_64-efi             # inside chroot
+update-grub
+reboot
+
+sudo grub-install --efi-directory=/boot/efi /dev/sda       # outside chroot
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+efibootmgr                                                 # current UEFI settings
+%%
+
+
+/// install graphics: vulkan
+sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-utils
+sudo apt install vulkan-tools
+vulkaninfo | grep 'Vulkan Instance Version'
+%%
+
+
+/// install terminal: allacrity
+sudo add-apt-repository ppa:mmstick76/alacritty 
+sudo apt install alacritty
+%%
+
+
+/// install ebook-reader: foliate
+sudo apt install flatpak
+sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+sudo flatpak install flathub com.github.johnfactotum.Foliate
+flatpak update -y
+%%
+
+
+/// install browser: brave-browser
+sudo apt install apt-transport-https curl gnupg
+curl -s https://brave-browser-apt-release.s3.brave.com/brave-core.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
+echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+sudo apt update
+sudo apt install brave-browser
+%%
+
+
+/// install browser: vivaldi
+# https://help.vivaldi.com/article/manual-setup-vivaldi-linux-repositories/
+sudo apt -y install wget gnupg2
+wget -qO- https://repo.vivaldi.com/archive/linux_signing_key.pub | sudo apt-key add -
+sudo add-apt-repository 'deb https://repo.vivaldi.com/archive/deb/ stable main' 
+sudo apt update && sudo apt install vivaldi-stable
+apt policy vivaldi-stable
+sudo /opt/vivaldi/update-ffmpeg
+
+sudo add-apt-repository "deb http://archive.canonical.com/ubuntu `lsb_release -cs` partner"
+sudo apt update && sudo apt install adobe-flashplugin
+%%
+
+
+/// apt linux issue: 'A package has been kept back'
+# It's when a new package must be installed to perform the upgrade.
+sudo apt-get install --reinstall libjpeg-progs
+sudo apt-get --with-new-pkgs upgrade                       # to install those
+sudo apt-get install kept_back_packages                    # to upgrade them
+sudo apt-get dist-upgrade                                  # to install new dependencies
+
+# 'Packages won't be removed unless they are unused.'
+sudo aptitude safe-upgrade
+
+# Held back a package (prevent from being installed, upgraded, removed)
+sudo apt-mark hold mariadb-server
+apt-mark showhold
+sudo aptitude forbid-version bash=5.0-6ubuntu1.1
+sudo aptitude upgrade
+
+# For linux-headers packages only
+sudo apt-get update
+sudo apt-get autoremove
+sudo apt-get autoclean
+sudo apt-get upgrade
+%%
+
+
+/// linux swap: swap memory insight
+free -h                                       # swap usage
+swapon --show                                 # swap type (partition or file)
+cat /proc/swaps
+cat /proc/meminfo | grep -i swap
+vmstat                                        # what is being swapped
+smem -rs swap | less                          # how much swap is being used by processes
+%%
+
+
+/// files: video thumbnails
+sudo apt-get install ffmpeg ffmpegthumbnailer
+rm --recursive ~/.cache/thumbnails
+sudo nano /usr/share/thumbnailers/totem.thumbnailer
+systemctl reboot
+%%
+
+
+/// files: remove
+# https://linuxhandbook.com/unlink-command/
+
+rm ~/winekey.hq                               # remove a file
+unlink ./symlink                              # remove a link
+rmdir ~/empty/                                # remove an empty directory
+rm -r ~/dump/                                 # remove a directory with its content
+rm -rf ./projects/.git                        # remove a directory with its content with special files
+%%
+
+
+/// install downloader: jdownloader2
+sudo snap install jdownloader2
+sudo snap connect jdownloader2:removable-media 
+%%
+
+
+/// install python framework: anaconda3
+cd /media/amana/386407ee-f7b9-4feb-9332-f84151ba34f3/Oprogramowanie/Programistyczne/Anaconda3
+sudo chmod u+x Anaconda3-2020.11-Linux-x86_64.sh
+sudo ./Anaconda3-2020.11-Linux-x86_64.sh
+
+cd /media/amana/386407ee-f7b9-4feb-9332-f84151ba34f3/INSTALL/anaconda3/bin
+./pip3 install pandas
+./pip3 install pandoc
+./pip3 install mlxtend
+./pip3 install notebook-as-pdf
+./pip3 install sklearn
+./pip3 install wordnet
+./pip3 install sysmon
+./conda update --all
+
+sudo apt install pandoc texlive-xetex
+%%
+
+
+/// deinstall python framework: anaconda3
+cd ~/anaconda3/bin
+./conda install anaconda-clean
+./anaconda-clean --yes
+cd ~
+rm -rf /anaconda3
+rm -rf ~/.anaconda_backup
+# remove conda init from ~/.bashrc or ~/.bash_profile
+%%
+
+
+/// network: DNS lookup
+host teamquest.pl                             # DNS address
+host 94.152.51.235                            # reverse DNS
+
+host -a teamquest.pl                          # all info (DNS records)
+host -t NS teamquest.pl                       # NS - name server
+host -t MX teamquest.pl                       # MX - mail server
+host -t TXT teamquest.pl                      # TXT - descriptive text
+host -t SOA teamquest.pl
+
+host -R 3 china.com                           # UDP queries retries
+host -6 amazon.com                            # IPv6
+%%
+
+
+/// files checksum: generate/verify a checksum/hash
+sudo apt-get install libarchive-zip-perl      # crc32; note that there are different types of CRC32 algorithm
+
+sha256sum CLion-2021.1.2.tar.gz               # 9f4d096918c140d28c766a149ab0c52bddddf5919e1ce28bc092c3d325c7a9ff
+sha1sum CLion-2021.1.2.tar.gz                 # 6cfa8dc7a50b9e32e3de7231abec2bd08d75a464
+md5sum CLion-2021.1.2.tar.gz                  # 09a6ee8e26dbc1b7cdcb03864fdae232
+cksum CLion-2021.1.2.tar.gz                   # 3066253463 724314199
+crc32 CLion-2021.1.2.tar.gz                   # cb9d9cff
+
+echo "6cfa8dc7a50b9e32e3de7231abec2bd08d75a464 *CLion-2021.1.2.tar.gz" | shasum --check
+cat CLion-212.4746.15.tar.gz.sha256 | shasum -a 256 --check
+
+
+echo -n "LongString" | gzip -c | tail -c8 | hexdump -n4 -e '"%u"'     # 1198921715
+crc32 <(echo "LongString")                                            # 1624d322
+%%
+
+
+/// ubuntu: animation speed
+gsettings set org.gnome.desktop.interface enable-animations false 
+dconf-editor:/org/gnome/desktop/interface/enable-animations
+
+sudo apt install gnome-shell-extension-impatience
+# https://extensions.gnome.org/extension/277/impatience/
+%%
+
+
+/// network: connection activity
+sudo nethogs
+sudo iftop -i wwx001e101f0000
+netstat -tup
+sudo tcpdump -i wwx001e101f0000
+netstat -cW
+lsof -i | grep -v 'localhost' 
+
+
+sudo apt install net-tools
+netstat -tulpen                               # listening processes
+ss -tlunp
+ss -tlunpe
+lsof -nP -iTCP -sTCP:LISTEN
+lsof -nP -i | grep 'LISTEN\|UDP'
+
+netstat -atupen                               # all connections
+ss -taunp
+
+sudo apt install whois
+netstat -atupen | grep ESTABLISHED
+ss -tunp
+whois 108.177.14.108 | less
+
+sudo apt install tcptrack
+sudo tcptrack -i ppp0
+
+sudo apt install vnstat
+service vnstat status
+vnstat
+vnstat -l -i eth0
+%%
+
+
+/// network hardware linux: devices information
+lspci | grep -E 'Network|Ethernet'
+lshw -class network
+
+ip ad show                                    # network configuration
+ifconfig
+
+grep -r '.*'  /sys/class/net/*/device/vendor  # vendor ID
+grep -r '.*'  /sys/class/net/*/device/irq     # IRQ (Interrupt ReQuest)
+%%
+
+
+/// gnome desktop-environment install: cursors
+# Intall ocs-url (download .deb, .rpm, .tar.xz)
+# https://www.opendesktop.org/p/1136805/
+sudo apt install libqt5svg5 qml-module-qtquick-controls
+sudo dpkg -i ocs-url*.deb
+
+# Search for GNOME cursors and unzip the archives to the chosen system directory.
+# https://www.gnome-look.org/browse?cat=107&order=latest
+
+/usr/share/icons                              # global
+~/.icons/                                     # local
+%%
+
+
+/// files: non-empty directories list
+find . -mindepth 1 -maxdepth 1 -not -empty -type d
+find . -mindepth 1 -maxdepth 1 ! -empty -type d
+%%
+
+
+/// git catch2 install: how to install Catch2 from sources?
+# https://github.com/catchorg/Catch2/blob/devel/docs/cmake-integration.md#installing-catch2-from-git-repository
+git clone https://github.com/catchorg/Catch2.git
+cd Catch2
+cmake -Bbuild -H. -DBUILD_TESTING=OFF
+sudo cmake --build build/ --target install
+%%
+
+
+/// linux hardware: power supply
+sudo dmidecode --type 39                      # System Power Supply
+sudo dmidecode -t chassis                     # Power Supply State
+
+upower --enumerate
+upower -i /org/freedesktop/UPower/devices/DisplayDevice
+upower -d
+
+sudo lshw -c power
+ls /sys/class/power_supply/                   # may be empty; if not, search for AC/DC
+
+sudo apt install lm-sensors
+systemctl status kmod.service                 # systemd
+sudo service kmod start                       # systemv
+sensors
+watch sensors
+
+sudo apt install powertop
+sudo apt install ipmitool
+gnome-power-statistics                        # buggy for desktop PC AC/DC, fine for notebook battery
+sudo powertop                                 # power consumption
+ipmitool                                      # Intelligent Platform Management Interface devices
+%%
+
+
+/// install messaging: signal-desktop
+# https://signal.org/download/#
+wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
+cat signal-desktop-keyring.gpg | sudo tee -a /usr/share/keyrings/signal-desktop-keyring.gpg > /dev/null
+echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' | sudo tee -a /etc/apt/sources.list.d/signal-xenial.list
+sudo apt update && sudo apt install signal-desktop
+%%
+
+
+/// adb gnirehtet: reverse tethering (PC Internet to mobile device)
+# https://github.com/Genymobile/gnirehtet
+# https://github.com/vvviperrr/SimpleRT
+
+cd gnirehtet_folder
+adb devices
+adb install -r gnirehtet.apk
+./gnirehtet run
+%%
+
+
+/// hardware keyboard: keyboard test
+# https://github.com/scottkirkwood/key-mon
+dpkg --get-selections | grep 'x11-utils'
+
+xev
+xev | grep 'keycode'
+xev -event keyboard
+xev | sed -n 's/[ ]*state.* \([^ ]*\)).*/\1/p'
+
+showkey --ascii --scancodes --keycodes
+screenkey
+sudo evtest
+%%
+
+
+/// files filesystem network: FTP connection
+ftp ftp.cesca.es
+$ anonymous [Enter]
+$ ls
+$ bye
+
+host ftp.cesca.es
+ftp 84.88.0.29
+$ anonymous [Enter]
+$ ls -lshaF
+$ cd ubuntu/release/focal
+$ lcd ~/Downloads/
+$ get FOOTER.html
+$ cd ubuntu/release/cdicons
+$ mget *.png
+$ put iso.png
+$ quit
+
+ftp ftp.cesca.es
+$ anonymous [Enter]
+$ help                                        # list of commands
+$ exit
+%%
+
+
+/// adb
+# ADB: Android Debug Bridge
+adb devices                                   # devices list connected via 'USB debugging'
+
+adb shell 
+$ ls /system/bin                              # list of commands
+$ ls /sdcard                                  # mobile device internal storage
+$ ls /sdcard/emulated/0                       # ditto, but this should be rejected operation
+$ ls /storage                                 # all storages, including external ones (SD cards)
+
+$ cd /storage/4C09-A519/Android/data/com.mapswithme.maps.pro/files/MapsWithMe
+$ mkdir 210524
+$ cp -r 210524/ /sdcard/MapsWithMe/210524
+$ cd ..
+$ rm -r MapsWithMe/                           # remove folder
+$ cd ..
+$ rmdir files/                                # remove empty folder
+$ exit
+
+adb push ~/Pictures/Wallpapers /storage/4C09-A519/Pictures/
+%%
+
+/// issue linux ubuntu: high CPU usage — tracker-miner-fs, tracker-store, tracker-extract
+# It's an equivalent of Windows Search (indexes files into database).
+
+# tracker-miner-user-guides and tracker-miner-apps might be missing
+cd /etc/xdg/autostart
+echo -e "\nHidden=true\n" | sudo tee --append tracker-extract.desktop tracker-miner-apps.desktop tracker-miner-fs.desktop tracker-miner-user-guides.desktop tracker-store.desktop > /dev/null
+gsettings set org.freedesktop.Tracker.Miner.Files crawling-interval -2
+gsettings set org.freedesktop.Tracker.Miner.Files enable-monitors false
+
+# run as current user (do not use sudo)
+tracker reset --hard
+%%
+
+
+/// linux terminal: manual pages
+man man                                       # list of sections
+apropos -r '.*'                               # list of all manual pages
+
+man 2 read
+apropos read | less                           # search for manual entries
+info read                                     # read .info about 'read'
+whatis read                                   # one-liner from the manual
+
+man bash-builtins | grep -n 'read \[-ers\]'
+manpath -C bash-builtins
+ls -lshF /usr/share/man/man7/ | grep 'bash'
+%%
+
+
+/// python: upgrade packages
+sudo apt install python3-pip pipenv python-is-python3
+
+pip3 freeze > pip3_freeze.txt
+pip3 install -r pip3_freeze.txt --upgrade
+pip3 list -o | cut -f1 -d' ' | tr " " "\n" | awk '{if(NR>=3)print}' | cut -d' ' -f1 | xargs -n1 pip3 install -U
+%%
+
+
+/// proton wine issue gaming: resolve dependencies hell
+# nvidia proprietary driver
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo dpkg --add-architecture i386 
+sudo apt update
+sudo apt install nvidia-driver-470
+sudo apt install libvulkan1 libvulkan1:i386
+
+# winehq-staging instead of wine
+wget -nc https://dl.winehq.org/wine-builds/winehq.key
+sudo apt-key add winehq.key
+sudo apt-add-repository 'https://dl.winehq.org/wine-builds/ubuntu/'
+sudo apt update
+sudo apt install --install-recommends winehq-staging
+sudo apt install winetricks
+sudo apt install wine64
+%%
+
+
+/// lutris wine gaming issue: "ERROR: ld.so: object '/usr/$LIB/libgamemodeauto.so.0' from LD_PRELOAD cannot be preloaded (cannot open shared object file): ignored"
+# There are only 64-bit versions of the packages.
+
+cd ~
+ls /usr/lib/*/libgamemodeauto.so.0            # */
+sudo apt remove gamemode --autoremove
+wget http://ftp.debian.org/debian/pool/main/g/gamemode/gamemode_1.6.1-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gamemode/gamemode-daemon_1.6.1-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gamemode/libgamemode0_1.6.1-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gamemode/libgamemodeauto0_1.6.1-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gamemode/libgamemode0_1.6.1-1_i386.deb http://ftp.debian.org/debian/pool/main/g/gamemode/libgamemodeauto0_1.6.1-1_i386.deb
+sudo apt install -f ./gamemode_1.6.1-1_amd64.deb ./gamemode-daemon_1.6.1-1_amd64.deb ./libgamemode0_1.6.1-1_amd64.deb ./libgamemode0_1.6.1-1_i386.deb ./libgamemodeauto0_1.6.1-1_amd64.deb ./libgamemodeauto0_1.6.1-1_i386.deb
+apt list --installed '*gamemode*'
+%%
+
+
+/// install gaming: lutris
+sudo add-apt-repository ppa:lutris-team/lutris
+sudo apt install lutris
+lutris
+%%
+
+
+/// install database rss-reader: quiterss
+sudo add-apt-repository ppa:quiterss/quiterss
+sudo apt install quiterss
+%%
+
+
+/// install downloader: yt-dlp
+cd /
+sudo aria2c https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+sudo chmod a+rx /usr/local/bin/yt-dlp
+yt-dlp --version
+whereis yt-dlp
+%%
+
+
+/// install issue calibre ubuntu: 'RuntimeError: Failed to load the progress_indicator C extension, with error: PyCapsule_GetPointer called with incorrect name'
+sudo apt purge calibre
+sudo apt install xdg-utils wget xz-utils
+
+sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin
+# wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin install_dir=~/calibre-bin isolated=y
+%%
+
+
+/// files filesystem java: java installations
+java --version
+update-alternatives --list java
+whereis java
+apt list --installed | grep -i 'jdk'
+%%
+
+
+/// install steam lutris gaming: proton-ge/wine-ge
+# https://github.com/GloriousEggroll/proton-ge-custom/releases
+# https://github.com/GloriousEggroll/wine-ge-custom/releases
+
+mkdir -p ~/.local/share/lutris/runners/wine/
+mkdir -p ~/.steam/root/compatibilitytools.d/
+tar -xf lutris-ge-6.16-2-lol-x86_64.tar.xz -C ~/.local/share/lutris/runners/wine/
+tar -xf Proton-6.16-GE-1.tar.gz -C ~/.steam/root/compatibilitytools.d/
+%%
+
+
+/// gnome desktop-environment install: icon theme/cursor
+# "https://www.gnome-look.org/browse?cat=107&ord=latest"
+sudo apt install libx11-dev libxcursor-dev libpng-dev                 # dependencies
+
+# ~/.local/share/icons                                                # local
+# /usr/share/icons                                                    # global
+
+
+mkdir -p ~/.icons
+cd ./customization/gnome-cursors/
+cat *.tar.gz | tar zxf - -i                                           # extract all *.tar.gz
+ls *tar.xz | xargs -n 1 tar -xf                                       # extract all *.tar.xz
+unzip '*.zip' 2>&1 > /dev/null                                        # extract all *.zip
+find . -maxdepth 1 -type d -print0 | xargs -0 mv -t ~/.icons/         # move directories to ~/.icons/
+
+sudo update-alternatives --config x-cursor-theme                      # only for globals
+systemctl reboot
+%%
+
+
+/// gedit install: gedit themes
+# https://github.com/ricardograca/gedit-themes
+# https://github.com/mig/gedit-themes
+
+# ~/.local/share/gedit/styles/
+# ~/.local/share/gtksourceview-3.0/styles
+# ~/.gnome2/gedit/styles
+# /usr/share/gtksourceview-3.0/styles
+# /usr/share/gtksourceview-2.0/styles
+
+# unzip ./customization/gedit-themes/gedit-themes-master.zip
+git clone https://github.com/ricardograca/gedit-themes.git
+cd gedit-themes-master/
+rm ./README.md
+rm ./install
+rm ./.gitignore
+mkdir -p ~/.local/share/gedit/styles
+mv -v ./* ~/.local/share/gedit/styles/                                # */
+cd ..
+rmdir gedit-themes-master/
+nano ~/.local/share/gedit/styles/ironman.xml 
+%%
+
+
+/// files archives install: how to install a program from a tarball?
+tar -zxvf mytarball.tar.gz
+./configure
+make
+make install
+%%
+
+
+/// files: move
+mv  -v ~/Downloads/* ~/Videos/                                 # */
+find ~/Downloads/ -type f -print0 | xargs -0 mv -t ~/Videos    # all files, but no folders
+find . -maxdepth 1 -type d -print0 | xargs -0 mv -t ~/.icons/  # all folders, but no files
+%%
+
+
+/// files symlinks: softlink, hardlink, relative link
+# can't link directories; has the same inode number and permissions of original file
+ln source_file hardlink
+ls -li
+
+# has different inode number and file permissions; has only the path, not the content
+ln -s source_file softlink
+ln -s '../../pictures/krajobrazy/windows-spotlight/' ./wspotlight
+%%
+
+
+/// linux date-and-time: display current date and time
+date                                          # "śro, 29 wrz 2021, 14:30:38 CEST"
+date -u                                       # "śro, 29 wrz 2021, 12:31:41 UTC"
+date -I                                       # "2021-09-29"
+date +%T                                      # "14:40:47"
+date --iso-8601=ns                            # "2021-09-29T14:43:21,819535149+02:00"
+
+
+locale | grep 'LC_TIME'
+$ locale/LC_TIME=pl_PL.UTF-8
+
+date '+%A, %d %B, %j. dzień roku, %H:%M %Z, %U. tydzień roku'
+$ środa, 29 września, 272. dzień roku, 14:52 CEST, 39. tydzień roku
+%%
+
+
+/// linux date-and-time: uptime
+uptime                                        # "05:41:42 up 1 day, 0 min,  1 user,  load average: 0,95, 1,26, 1,23"
+uptime --pretty                               # "up 23 hours, 59 minutes"
+uptime | cut -d ' ' -f2                       # "05:40:50"
+%%
+
+
+/// apt dpkg pacman: installed packages list
+apt list --installed | less -N                             # Ubuntu
+apt list --installed | grep '\[installed\]' | less -N
+apt list --installed | wc -l
+dpkg --get-selections | grep 'deinstall' | less -N
+
+pacman -Q                                                  # Arch Linux
+pacman -Qe
+apk info                                                   # Apline Linux
+apk info -vv
+dpkg-query -l                                              # Debian/Ubuntu
+yum list installed                                         # RHEL/Fedora/CentOS
+dnf list installed
+zypper se --installed-only                                 # openSUSE
+rpm -qa                                                    # RedHat
+rpm -qa --list
+
+snap list                                                  # package management systems
+flatpak list --app
+%%
+
+
+/// bc linux: calculate a mathematical expression
+echo "1+2+4+8" | bc
+bc -l <<< '21.4 + 11.76'
+bc -l <<< "scale=3; 123.3*0.23"
+%%
+
+
+/// files: display Windows PE (*.exe, *.msi) metadata
+stat EpicInstaller-12.2.17.msi                # file status
+file EpicInstaller-12.2.17.msi                # file type info
+lsattr                                        # attributes in the PWD
+man chattr                                    # explanation of lsattr attributes
+
+sudo apt install libimage-exiftool-perl
+exiftool UbisoftConnectInstaller.exe | less
+exiftool some.exe | grep -i 'version'
+%%
+
+
+/// files: video/audio duration
+exiftool video.mp4 | grep '^Duration'
+exiftool video2.webm | grep 'Tag String'
+ffmpeg -i video.mp4 2>&1 | grep 'Duration' | cut -d ' ' -f 4 | sed s/,//
+%%
+
+
+/// nautilus file-manager: icon size
+dconf-editor:/org/gnome/nautilus/icon-view/default-zoom-level
+%%
+
+
+/// linux gnome desktop-environment: cursor size
+dconf-editor:/org.gnome.desktop.interface/cursor-size
+
+# old approaches
+dconf write /org/gnome/desktop/interface/cursor-size 48
+gsettings set org.gnome.desktop.interface cursor-size 48
+gconf-editor:/desktop/gnome/peripherals/mouse/cursor_size
+gconf-editor:/apps/compiz/general/allscreens/options/cursor_size
+%%
+
+
+/// network: youtube channel_id
+youtube-dl --get-filename -o '%(channel_id)s' https://www.youtube.com/c/SoundOfTheAviators/videos
+yt-dlp --get-filename -o '%(channel_id)s' https://www.youtube.com/c/SoundOfTheAviators/videos
+
+# General approach:
+# Search for "externalId"/"rssUrl" within the webpage content having 'tabPath=videos'.
+# This value is between unique key "channelMetadataRenderer" and the first occurence of "trackingParams" after the key.
+%%
+
+
+/// files file-manager: display thumbnailes for Windows files
+sudo apt install exe-thumnailer
+sudo apt install gnome-exe-thumbnailer
+
+# Not all *.exe will get a thumbnail, not all file managers implement this functionality.
+sudo apt install thunar
+%%
+
+
+/// files: view executable/shared library information (*.dll, *.exe, *.so, *.o)
+sudo snap install resourcehacker              # requires wine
+resourcehacker
+
+sudo apt install pev                          # PE resources
+peres -v program.exe | awk '{print $3}'
+wrestool --extract --raw --type=version program.exe | strings -el | grep Version -A 1
+
+dump -Tv foo.o                                # AIX shared object
+readelf -Ws libfoo.so                         # ELF shared object
+nm -D libfoo.so
+ldd foo.dll                                   # Windows DLL
+nm foo.dll
+objdump -f foo.dll
+
+sudo apt install radare2
+rabin2 -s glew32.dll | head -n 5
+%%
+
+
+/// files file-manager: batch rename
+sudo apt install util-linux
+rename.ul file photos *.png                                           # expression replace files
+rename.ul png jpg *.png                                               # "*.png" -> "*.jpg"
+rename.ul --no-act --verbose .jpg space_bg_.jpg *.jpg
+
+sudo apt install rename
+rename 's/file/photos/' *
+
+sudo apt install renameutils
+qmv
+
+sudo apt install thunar
+thunar -B                                                             # GUI
+
+sudo snap install smart-file-renamer
+smart-file-renamer                                                    # GUI
+%%
+
+
+/// files linux gnome desktop-environment: shortcuts (*.desktop)
+# /etc/xdg/autostart
+# /usr/share/applications                     # Ubuntu:/Show Applications/
+
+
+# entry.desktop
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Version=1.0
+GenericName=Virtual Machine
+GenericName[de]=Virtuelle Maschine
+Name=Oracle VM VirtualBox
+Name[fr]=Changer la couleur du dossier Flatery
+Comment=Change Flatery folder color
+Categories=Graphics;RasterGraphics;Other;Emulator;System;GNOME;GTK;Core;Documentation;Utility;
+MimeType=image/svg;
+Icon=applications-system-symbolic
+Icon[pl]=/usr/local/share/flatery-color/preferences-color.svg
+Exec=sh -c "pkexec sudo /usr/local/share/flatery-color/flateryrun"
+TryExec=VirtualBox %U
+Path=/usr/bin
+StartupNotify=false
+Keywords=virtualization;
+StartupWMClass=VirtualBox Manager
+OnlyShowIn=GNOME;Unity;
+NotShowIn=KDE;
+Terminal=false
+NoDisplay=true
+Actions=Manager;new-window;
+
+[Desktop Action Manager]
+Exec=VirtualBox
+Name=Open VM Manager
+
+[Desktop Action new-window]
+Exec=firefox -new-window
+# end entry.desktop
+%%
+
+
+/// files encoding sed: convert some diacritics from 'Western ISO-8859-15' to UTF-8
+# First of all, resave the source file.txt with UTF-8 character encoding.
+# Commands below will work for Polish language.
+
+sed -i "s/¹/ą/g" file.txt
+sed -i "s/æ/ć/g" file.txt
+sed -i "s/ê/ę/g" file.txt
+sed -i "s/³/ł/g" file.txt
+sed -i "s/£/Ł/g" file.txt
+sed -i "s/ñ/ń/g" file.txt
+sed -i -e "s/\xc2\x9c/ś/g" file.txt 
+sed -i -e "s/\xc2\x8c/Ś/g" file.txt
+sed -i "s/¿/ż/g" file.txt
+sed -i "s/¯/Ż/g" file.txt
+sed -i -e "s/\xc2\x9f/ź/g" file.txt
+%%
+
+
+/// filesystem disks linux: format a device as UDF
+# UDF: Universal Disk Format.
+# ISO/IEC 13346 or ECMA-167 (UDF), an extension to ISO 9660 (CDFS/ISOFS).
+# This is a file system used on some CD-ROMs and DVDs.
+# It is also suitable for removable USB disks since its support within multiple OSes.
+
+sudo apt-get install udftools
+sudo dd if=/dev/zero of=/dev/sdb1 bs=512 count=1
+sudo mkudffs --media-type=hd --blocksize=512 /dev/sdb1
+%%
+
+
+/// files sed: replace bytes
+sed -i -e "s/\xc3\xb9/\xd7\xa0/" file                      # \xc3\xb9 to \xd7\xa0
+
+echo -e "\xe8\x90" > a
+perl -pne 's/\xe8\x90/\x41\x42/g' < a > output             # \xe8\x90 to AB
+%%
+
+
+/// files encoding: convert files between different character sets
+iconv -f UTF-8 -t ISO-8859-15 in.txt > out.txt
+
+recode UTF8..ISO-8859-15 in.txt                            # works in-place
+recode utf8..l9 in.txt                                     # alias
+recode ../CR-LF in.txt                                     # surface: LF to CR-LF (Unix to DOS)
+recode ../Base64 in.txt                                    # base64
+
+
+# One-liners for automatic character set detection and conversion to UTF-8:
+find . -type f -iname *.txt -exec sh -c 'iconv -f $(file -bi "$1" | sed -e "s/.*[ ]charset=//") -t utf-8 -o converted "$1" && mv converted "$1"' -- {} \;
+iconv -f $(chardetect input.text | awk '{print $2}') -t utf-8 -o output.text
+
+native2ascii filename.properties
+%%
+
+
+/// files sed: replace text
+sed -i 's/original/new/g' file.txt
+sed 's/blue/azure/' input.txt
+
+awk '{sub(/blue/,"azure")}1' input.txt
+awk '{sub(/blue/,"azure")}1' input.txt > temp.txt && mv temp.txt input.txt
+awk '{gsub(/1/,"0");}' file
+awk '{gsub(/1/,"0",$1);}' file
+
+perl -pe 's/blue/azure/' input.txt
+%%
+
+
+/// linux: clipboard copy/paste
+# X Window System has: primary selection, secondary selection, and clipboard selection.
+
+xsel --clipboard < new-clipboard-contents.txt
+xsel --clipboard > current-clipboard-contents.txt
+
+echo "Hello World" | xclip -sel clip
+echo -n "some-text" | xclip -selection clipboard
+cat samples.sh | xclip -sel clip
+xclip-copyfile /etc/hosts
+xclip-pastefile
+xclip -selection clipboard -t image/png -o > "`date '+%Y-%m-%d_%T'`.png"
+xclip  -selection clipboard -o -t text/rtf > mypreciousRTFcontent.rtf
+
+sudo apt install clipit
+ls | clipit
+
+# https://github.com/hluk/CopyQ/releases
+copyq action "cat /tmp/file.txt" "" && copyq select 0
+copyq write image/png - < file.png && copyq select 0
+copyq write application/pdf - < file.pdf && copyq select 0
+%%
+
+
+/// network: MAC address (NIC hardware identifier)
+cat /sys/class/net/*/address                               # */
+lshw -C network | grep 'serial'
+ifconfig | grep 'HWaddr'
+%%
+
+
+/// files terminal: trim text to first N characters
+cut -c-22 file
+7z l archive.7z | cut -c-120 | less -N
+awk 'BEGIN{FIELDWIDTHS="22"} {print $1}' file
+echo ${STR:0:10}
+echo ${STR:(-5):4}
+%%
+
+
+/// linux gnome: gnome version
+gnome-shell --version
+ubuntu::/panel/Settings/About/GNOME Version
+%%
+
+
+/// linux gnome: sound themes
+# https://github.com/coffeeking/Linux-a11y-sound-theme
+# https://github.com/coffeeking/chihuahua-sound-theme
+# https://github.com/Ubuntu/communitheme-sounds
+
+# /usr/share/sounds
+dconf-editor:/org/gnome/desktop/sound/theme-name
+gnome-tweaks:/Appearance/Themes/Sound
+%%
+
+
+/// files filesystem: change permissions
+sudo chmod -R ug+rw foldername                             # recursively
+sudo chmod ugo-x /opt/*/*/                                 # using globbing
+
+sudo find foldername -type f -exec chmod 644 {} ";"
+sudo find . -exec chmod a+rwx {} ";"
+%%
+
+
+/// files terminal: count lines, words, characters
+wc -l file.txt                                # lines
+wc -w file.txt                                # words
+wc -m file.txt                                # characters
+%%
+
+
+/// linux hardware filesystem: zRAM
+sudo apt install zram-config
+cat /proc/swaps
+
+sudo apt install util-linux
+zramctl
+
+sudo nano /usr/bin/init-zram-swapping         # zram size
+cat /sys/block/zram0/comp_algorithm           # zram compression algorithm
+%%
+
+
+/// linux swap hardware: swappiness
+# https://askubuntu.com/questions/157793/why-is-swap-being-used-even-though-i-have-plenty-of-free-ram
+
+# 0: avoid unless system runs out of physical memory
+# 100: swap almost instantly (strong preference to steal pages from cache)
+# Decreasing swappiness decrease the size of the disk cache at the same time!
+# https://www.linuxatemyram.com
+
+# When having zRAM without any swap suggested swappiness=100.
+# The default value is swappiness=60.
+# When having more than 8GB of RAM suggested swappiness=10.
+# When having SDD only suggested swappiness=1.
+
+
+cat /proc/sys/vm/swappiness
+
+sudo bash -c "echo 'vm.swappiness = 10' >> /etc/sysctl.conf"          # permanent
+sudo sysctl vm.swappiness=10                                          # session
+sudo sysctl -p                                                        # refresh
+
+gksudo gedit /etc/sysctl.conf
+sudo sysctl --load=/etc/sysctl.conf
+%%
+
+
+/// network files: download youtube video/audio
+yt-dlp --get-filename https://www.youtube.com/watch?v=mFhlZ3N9Em4
+yt-dlp --print filename mFhlZ3N9Em4
+yt-dlp --list-formats mFhlZ3N9Em4
+
+# Download video and audio stream for WebM and merge it into a single file:
+yt-dlp --format=247 -o video.webm mFhlZ3N9Em4
+yt-dlp --format=251 -o audio.ogg mFhlZ3N9Em4
+ffmpeg -i video.webm -i audio.ogg -c:v libx264 -c:a copy out.mp4
+
+# Download audio+video mp4 720p:
+yt-dlp --format=22 --embed-thumbnail --embed-metadata -o '%(title)s [%(vcodec)s_%(vbr)svbr %(acodec)s %(fps)sfps_%(format_note)s_%(width)sx%(height)s].%(ext)s' mFhlZ3N9Em4
+yt-dlp --format=22 --embed-thumbnail --embed-metadata -o '%(title)s [%(channel)s %(format_note)s %(vbr)svbr %(id)s].%(ext)s' Romjqj-beXs
+yt-dlp --format=22 --embed-metadata -o '%(title)s [%(channel)s].%(ext)s' -P ./ f7bWAwfWRZM
+
+# Download videos from a playlist:
+yt-dlp --flat-playlist OLAK5uy_lDB38my3B-MkiPWB3s-Ya31jPnSJKIYdg
+yt-dlp --yes-playlist --format=22 --embed-metadata -o '%(title)s [%(channel)s].%(ext)s' https://www.youtube.com/playlist?list=OLAK5uy_lDB38my3B-MkiPWB3s-Ya31jPnSJKIYdg
+%%
+
+
+/// files: video/audio codec information
+# https://github.com/MediaArea/MediaInfo
+sudo apt install mediainfo mediainfo-gui
+
+mediainfo --Inform="Audio;%CodecID%" video.mp4                        # "mp4a-40-2"
+mediainfo --Inform="Audio;%BitRate%" video.mp4                        # "128013"
+mediainfo --Inform="Audio;%SamplingRate%" video.mp4                   # "44100"
+mediainfo --Inform="Video;%CodecID%" video.mp4                        # "avc1"
+mediainfo --Inform="Video;%FrameRate%" video.mp4                      # "25.000"
+mediainfo --Inform="Video;%Width% %Height%" video.mp4                 # "1920 1080"
+mediainfo --Inform="Video;%Duration%" video.mp4                       # "276800"
+mediainfo video.mp4 | grep 'Duration' | head -n 1 | cut -d: f2        # " 4 min 36 s"
+
+ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 video.mp4
+$ h264
+
+ffmpeg -filter:v idet -frames:v 100 -an -f rawvideo -y /dev/null -i video.mp4
+# "Stream #0:0(und): Video: h264 (High)"…
+%%
+
+
+/// files du linux: disk usage
+# du — disk usage
+
+du -h folder
+du -sh folder                                              # folder size
+du -ah folder                                              # disk usage list
+du -ch folder                                              # total used space
+du -bM folder                                              # total used space shown in MB
+du -h --max-depth=1 folder                                 # size of all subdirectories
+du -h --exclude="*.php" folder
+du -ha --time log                                          # last modified files list
+%%
+
+
+/// terminal bash: bash startup configuration files
+# We have two types of shells: interactive, and non-interactive.
+# Non-interactive shells are not associated with a terminal (scripts, daemons, etc.).
+# An interactive shell can be either interactive login or interactive non-login.
+# A login shell is invoked in situations such as: SSH, local terminal window, "bash --login".
+# An interactive non-login shell is invoked from the login shell (a new GNOME terminal tab).
+
+# Bash startup files
+# https://shreevatsa.wordpress.com/2008/03/30/zshbash-startup-files-loading-order-bashrc-zshrc-etc/
+# interactive login: /etc/profile → [~/.bash_profile | ~/.bash_login | ~/.profile] → ~/.bash_logout
+# interactive non-login: /etc/bash.bashrc → ~/.bashrc → ~/.bash_logout
+# script: BASH_ENV
+
+
+# ~/.bash_profile
+# ~/.bash_login
+# ~/.bashrc
+# Bash only for interactive login shell in a specific user mode.
+# .bashrc colorizes bash output: su=red, other_users=green (.bashrc is included in .bash_login).
+
+# ~/.profile
+# Interactive login shell for a specific user (Bourne shell sh original).
+
+# /etc/profile.d/bash_completion.sh
+# Used by interactive login shell in all users mode (included in /etc/profile).
+
+# /etc/profile.d/vte-2.91.sh
+# /etc/profile.d/vte.sh
+# Used for virtual terminal emulators (included in /etc/profile).
+
+# /etc/skel
+# Default versions for .profile, .bashrc, and .bash_logout.
+
+# ~/.inputrc
+# Used for aliases and key bindings in non-interactive bash shells.
+%%
+
+
+/// network nmap: nmap
+sudo apt install nmap
+
+nmap scanme.nmap.org                                       # TCP scan (-sT)
+sudo nmap 192.168.10.121                                   # TCP SYN scan (-sS)
+sudo nmap -vv 192.168.10.121                               # more verbosity
+sudo nmap -sU 192.168.10.121                               # UDP scan
+sudo nmap -6 fd12:3456:789a:1::1                           # IPv6
+
+nmap 192.168.10.121 host.to.scan                           # multiple target addresses
+nmap 192.168.10.0/24                                       # CIDR (network range)
+nmap 192.168.10-12.1                                       # an octet range
+nmap 192.168.10,11,12.1                                    # ditto
+nmap 10.8-10.10,11,12.0/28  192.168.1-2.100,101
+nmap -sL 10.8-10.10,11,12.0/28  192.168.1-2.100,101        # only lists the targets
+nmap 10.8-10.10,11,12.0/28 --exclude 10.10.12.12
+
+nmap -p- 192.168.10.121                                    # scans all ports 1-65535
+nmap -p 443 192.168.10.121                                 # scan port 443 only
+nmap -p 80,443 192.168.10.121                              # scans ports 80 and 443
+sudo nmap -sU -p 1-1024 192.168.10.121                     # scans UDP ports 1-1024
+nmap -p 1-1024,8080,9000 192.168.10.121
+nmap -p ssh 192.168.10.121                                 # scans port 22 using its name
+
+sudo nmap -sn 192.168.10.0/24                              # ping scanning/discover hosts
+sudo nmap -n 192.168.10.0/16                               # disable reverse-DNS hosts resolution
+sudo nmap -O scanme.nmap.org                               # OS detection (TCP/IP stack fingerprint)
+sudo nmap -sV scanme.nmap.org                              # scan for a program service and version
+sudo nmap -A 192.168.10.121                                # OS and versions detection & traceroute
+
+sudo nmap -sU -p 1-1024 192.168.10.121 -oN output.txt      # file output
+sudo nmap -sU -p 1-1024 192.168.10.121 -oX output.xml      # XML output
+sudo nmap -sU -p 1-1024 192.168.10.121 -oG output          # grepable output
+
+nmap -sV --script http-malware-host scanme.nmap.org        # check if given host is compromised
+%%
+
+
+/// linux crontab anacrontab at: task scheduler
+# https://alvinalexander.com/linux/linux-crontab-file-format-example/
+# /var/spool/cron/ directory has a sticky bit set (T appears when the x bit for other users at the last position is not set). This prevent ordinary users from deleting or moving other users' files. Typically it is set on the /tmp directory.
+
+man 5 crontab
+ls -la /etc/cron.daily/                       # list daily cron tasks
+sudo ls /var/spool/cron/crontabs/             # users crontabs
+crontab -l                                    # list entries
+crontab -e                                    # edit entries interactively
+
+crontab -l > my-crontab
+crontab my-crontab                            # install the crontab
+
+# cron uses hardware clock to run its tasks
+sudo hwclock --systohc --verbose              # synchronize hardware clock with system clock
+sudo hwclock --verbose                        # get clock tick
+
+
+# Tasks missed due to system downtime are not handled by cron/crontab.
+# However, this is possible with anacron/fcron (they not assuming that computer is constantly running).
+man 8 anacron
+man 5 anacrontab
+cat /etc/anacrontab | less                    # anacron configuration file
+ls /etc/cron.daily                            # put a symlink to a script here to make a task
+
+
+sudo apt install -y at
+sudo systemctl enable --now atd.service
+at now + 1 hour                               # define interval first, then put commands
+at 6pm + 6 days                               # ctrl+d to exit
+at 6pm + 6 days -f script.sh
+atq                                           # at-the-queue (list pending jobs)
+atrm 4                                        # at-remove at column-name=4
+%%
+
+
+/// linux crontab: crontab example
+# Entry pattern: minute hour day-of-month month day-of-week command
+# An asterisk * always stands for "first-last" (every possible value).
+# Ranges are allowed with hyphens, e.g. "8-11" envelopes to '8,9,10,11'.
+# Lists are allowed with commas, e.g. "0-4,6,8-12,".
+# Steps are allowed with slashes, e.g. "*/2" means 'every 2 hours', "0-23/2" envelopes to '0,2,4,…'.
+# Instead of first five values, special fields may appear.
+
+# [string]                             [meaning]                     [entry]
+# @reboot                              run once at startup
+# @yearly | @annually                  run once a year               "0 0 1 1 *"
+# @monthly                             run once a month              "0 0 1 * *"
+# @weekly                              run once a week               "0 0 * * 0"
+# @daily | @midnight                   run once a day                "0 0 * * *"
+# @hourly                              run once an hour              "0 * * * *"
+
+# 1: run every minute of every day
+# 2: run every hour of every day
+# 3: run at 4:30am
+# 4: twice a day
+
+ *  *    * * *  /var/www/devdaily.com/bin/check-apache.sh
+ 0  *    * * *  /usr/bin/wget -O - -q -t 1 http://localhost/cron.php
+30  4    * * *  /var/www/devdaily.com/bin/create-all-backups.sh
+ 5 10,22 * * *  /var/www/devdaily.com/bin/mk-new-links.php
+%%
+
+
+/// linux crontab: anacron example
+# /etc/crontab
+# minute hour day-of-the-month month day-of-the-week [user] command
+0 0 */3 * * root /usr/local/sbin/maint.sh
+# end
+
+# /etc/anacrontab
+# period delay job-identifier command
+3 5 maint-job /usr/local/sbin/maint.sh
+# end
+%%
+
+
+/// ffmpeg: ffmpeg
+ffmpeg -i video.mp4                                        # media file details
+ffmpeg -i video.mp4 -hide_banner
+
+ffmpeg -i video.mp4 video.avi                              # mp4 to avi
+ffmpeg -i video.flv video.mpeg                             # flv/matroska to mpeg
+ffmpeg -i input.webm -qscale 0 output.mp4                  # preserve surce video quality
+ffmpeg -formats                                            # supported formats list
+
+ffmpeg -i input.mp4 -r 1 -f image2 image-%2d.png           # video to images
+ffmpeg -i input.mp4 -t 10 output.avi                       # convert first 10 seconds to avi
+ffmpeg -i input.mp4 -aspect 16:9 output.mp4                # set the aspect ratio
+ffplay video.mp4                                           # preview/test transcoded media file
+
+
+# audio transcoding options → ar: frequency, ac: channels, ab: bitrate, f: file format
+ffmpeg -i input.mp4 -vn output.mp3
+ffmpeg -i input.mp4 -vn -ar 44100 -ac 2 -ab 320 -f mp3 output.mp3
+
+# increase/decrease volume
+ffmpeg -i input.mp3 -af 'volume=0.5' output.mp3
+ffmpeg -i input.mp3 -af 'volume=1.5' output.mp3
+
+# scale video resolution to 1280x720 (720p)
+ffmpeg -i input.mp4 -filter:v scale=1280:720 -c:a copy output.mp4
+ffmpeg -i input.mp4 -s 1280x720 -c:a copy output.mp4
+
+# compressing video/audio
+ffmpeg -i input.mp4 -vf scale=1280:-1 -c:v libx264 -preset veryslow -crf 24 output.mp4
+ffmpeg -i input.mp4 -ac 2 -c:a aac -strict -2 -b:a 128k output.mp4
+ffmpeg -i input.mp3 -ab 128 output.mp3
+
+# remove audio/video
+ffmpeg -i input.mp4 -an output.mp4
+ffmpeg -i input.mp4 -vn output.mp3
+ffmpeg -i input.mp4 -vn -ab 320 output.mp3
+
+# cropping videos 640x480 from the position (200,150)
+ffmpeg -i input.mp4 -filter:v "crop=640:480:200:150" output.mp4
+
+# trim media file in a specified range
+ffmpeg -i input.mp4 -ss 00:00:50 -codec copy -t 50 output.mp4
+ffmpeg -i audio.mp3 -ss 00:01:54 -to 00:06:53 -c copy output.mp3
+
+# split audio/video into multiple parts
+ffmpeg -i input.mp4 -t 00:00:30 -c copy part1.mp4 -ss 00:00:30 -codec copy part2.mp4
+
+# join/merge multiple audio/video parts
+file /home/sk/myvideos/part1.mp4 > join.txt
+file /home/sk/myvideos/part2.mp4 >> join.txt
+ffmpeg -f concat -i join.txt -c copy output.mp4
+ffmpeg -f concat -safe 0 -i join.txt -c copy output.mp4
+ffmpeg -i "concat:audio1.mp3|audio2.mp3|audio3.mp3" -c copy output.mp3
+
+# add a poster image to audio file
+ffmpeg -loop 1 -i inputimage.jpg -i inputaudio.mp3 -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest output.mp4
+
+# add subtitles
+fmpeg -i input.mp4 -i subtitle.srt -map 0 -map 1 -c copy -c:v libx264 -crf 23 -preset veryfast output.mp4
+
+# increase/decrease video/audio playback speed
+ffmpeg -i input.mp4 -vf "setpts=0.5*PTS" output.mp4
+ffmpeg -i input.mp4 -vf "setpts=4.0*PTS" output.mp4
+ffmpeg -i input.mp4 -filter:a "atempo=2.0" -vn output.mp4
+%%
+
+
+/// terminal tr: character translations
+echo "ostechnix" | tr "ost" "OST"                                     # replacements
+echo "Ubuntu 20.04 #$%^" | tr "[:punct:]" "."
+echo "ostechnix" | tr "a-z" "A-Z"
+echo "ostechnix" | tr "[:lower:]" "[:upper:]"
+tr -d "[:space:]" < tr_test.txt
+tr -d "[:blank:]" < tr_test.txt
+
+echo "Production IP ==== 192.168.1.10" | tr -s "="                    # squeeze
+cat tr_test.txt | tr -s "\n"
+
+echo "Employee Number is 1267890" | tr -c "[:alpha:]" "*"             # complement
+echo "Employee Number is 1267890" | tr -cd "[:digit:]"
+
+tr -s "\n" < tr_test.txt > new_tr_test.txt
+%%
+
+
+/// ffmpeg: nvidia gpu hardware acceleration
+sudo apt install nvidia-driver-460
+sudo reboot
+
+sudo apt install nvidia-cuda-toolkit
+sudo apt install build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev
+
+mkdir ~/nvidia/ && cd ~/nvidia/
+git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+cd nv-codec-headers && sudo make install
+
+cd ~/nvidia/
+git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/
+cd ~/nvidia/ffmpeg/
+./configure --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64
+make -j $(nproc)
+ls -l ffmpeg
+./ffmpeg
+
+ffmpeg -y -hwaccel cuda -i input.file output.file
+nvidia-smi
+nvtop
+time /bin/ffmpeg -y -i /tmp/input.mkv /tmp/out.mp4
+%%
+
+
+/// network linux: ip address
+ip addr show | grep inet | grep -v 'inet6'| grep -v '127.0.0.1' | grep -v 'docker0' | awk '{print $2}' | cut -f1 -d/
+ifconfig
+ip a
+ip link
+%%
+
+
+/// linux: ls* commands family
+lsscsi -g                                     # SCSI/NVMe devices
+lsblk -fm | grep -v 'loop'                    # block devices: sd*, sr*, …
+lsb_release -a                                # LSB — Linux Standard Base
+lsusb                                         # USB devices
+lscpu                                         # CPU architecture
+lspci                                         # PCI devices
+lshw -short                                   # hardware configuration
+ls -lshFA                                     # list files and directories
+lsattr /etc/passwd                            # ext* files attributes
+lsmod | less                                  # loaded device drivers
+lspcmcia                                      # PCMCIA sockets and devices
+lswm                                          # Nintendo Wii Remote console devices
+lsdvd                                         # list DVD content
+lsmbox !                                      # the number of mailbox messages
+lsdiff                                        # list files modified by a patch
+lsmem                                         # available memory ranges
+lslogins | less                               # known users logins
+lsipc                                         # IPC — Inter-Process Communication
+
+lsof | less                                   # list all opened files
+lsof /dev/sr0                                 # list opened files on device /dev/sr0
+lsof /etc/passwd                              # processes using /etc/passwd file
+lsof -u kassandra -i                          # all files opened by user 'kassandra'
+lsof -i 4 -a -p 7007                          # list opened IPv4 network files by the process PID=7007
+lsof -i TCP:80                                # list processes running on TCP port 80
+lsof -i 6                                     # list opened IPv6 network files
+
+lslocks | less                                # list local system locks (replaces lslk)
+ls /proc/*/fd/* | grep LOCK_FILE_NAME         # */
+sudo lsof /var/lib/dpkg/lock
+sudo lsof | grep "master.lock"
+
+lsinitramfs -l /boot/initrd.img-$(uname -r) | less         # initramfs images content
+
+sudo apt install cgroup-tools
+lscgroup | less                                            # control groups (isolated resources usage)
+
+sudo apt install pst-utils
+lspst mypst-file                                           # list PST (MS Outlook Personal Folders)
+
+sudo apt install procinfo
+lsdev | less                                               # devices DMA, IRQ, I/O ports
+
+sudo apt install unar
+lsar archive.tar                                           # archive file content
+
+sudo apt install intel-gpu-tools
+lsgpu                                                      # GPU devices
+
+sudo apt install hwloc
+lstopo-no-graphics                                         # system topology
+
+
+# dynamic device management tool (replaces lshal)
+# HAL — Hardware Abstraction Layer
+udevadm info --query=all --attribute-walk --name=/dev/sda
+
+sudo add-apt-repository ppa:mjblenner/ppa-hal
+sudo apt-get update
+sudo apt-get install hal
+%%
+
+
+/// linux hardware: GPU
+lspci -v -s 01:00.0                           # VGA compatible driver
+lspci -vs 00:01.0                             # AMD PCI GPU ID
+lspci | grep -i VGA                           # VGA compatible controller
+sudo lshw -C display                          # onboard dedicated GPU
+glxinfo -B                                    # OpenGL/GLX implementations for X display
+grep -i --color memory /var/log/Xorg.0.log    # X.org log file
+nvidia-smi                                    # Nvidia card information
+%%
+
+
+/// linux network: TTL (Time-to-Live) for a DNS record
+dig MX cyberciti.biz @clay.ns.cloudflare.com
+dig +nocmd +answer +ttlunits c.cyberciti.biz @clay.ns.cloudflare.com
+%%
+
+
+/// linux terminal bash: repeat characters N times
+perl -E 'say "-" x 80'
+python2.7 -c 'print "-" * 80'
+for i in {1..90}; do echo -n "a"; done
+printf -- '-%.0s' {1..5}
+head -c 80 ​< /dev/zero | tr '\0' '.'
+seq -s_ 200 | tr -d '[:digit:]'
+help printf
+%%
+
+
+/// linux: BIOS version
+ls -l /sys/class/dmi/id/
+cat /sys/class/dmi/id/bios_version
+sudo dmidecode | less
+sudo dmidecode -s bios-version
+sudo dmidecode --type bios
+%%
+
+
+/// linux hardware: RAM slots
+sudo dmidecode -t memory
+sudo lshw -C memory -short
+%%
+
+
+/// files: find
+find . -name SEARCH_NAME                                   # by name
+find . -type f -name SEARCH_NAME                           # only files
+find . -type d -name SEARCH_NAME                           # only directories
+find . -type f -iname SEARCH_NAME                          # case-insensitive search
+find . -type f -name "*.cpp"                               # by extension
+find . -type f -name "*.cpp" -o -name "*.txt"              # with logical OR
+find ./location1 /location2 -type f -name "pattern"        # multiple directories
+find . -empty -type f                                      # empty files
+find . -maxdepth 1 -type f -name "*.txt"                   # current directory only search
+find . -path "./dir/*" -prune -o -name SEARCH_NAME         # exclude directory from search
+
+find . -size 50k                                           # files of exactly 50 KB
+find . -size +1G                                           # files bigger than 1 GB
+find . -size -20c                                          # files smaller than 20 B
+find . -size +100M -size -2G                               # 100 MB > files < 2 GB
+
+find . -type f -mtime -3                                   # files modified within 3*24 h
+find . -type f -ctime +5                                   # files created at least 5*24 h ago
+find . -type f -amin -5                                    # files accessed in the last 5 min
+
+find . -perm 777                                           # files with permission -rwxrwxrwx
+find . -perm a=r+w                                         # files of read/write access
+find . -type f -user John                                  # files owned by a user 'John'
+
+find . -type f -name "*.txt" -exec ls -l {} +              # ls -l file1 file2 file…
+find . -type f -name "*.txt" -exec ls -l {} \;             # ls -l file1; ls -l file2; …
+find . -type f -name "*.txt" -exec mv {} {}.old \;         # adds .old extension to all files
+find . -type f -name "*.txt" -exec grep -i alice {} +
+find . -type f -name "*.txt" | xargs ls -l                 # the same with xargs
+find . -type f -name "*.txt" | xargs grep -i alice
+%%
+
+
+/// linux bash terminal: sequences
+seq 4                                         # "1 2 3 4"
+seq 3 6                                       # lower and upper limit: "3 4 5 6"
+seq 3 0.5 6                                   # with an icrement: "3.0 3.5 4.0 4.5 5.0 5.5 6.0"
+seq 3 0.7 6                                   # "3.0 3.7 4.4 5.1 5.8"
+seq 6 -1 4                                    # backwards: "6 5 4"
+seq -w 9 11                                   # with the same width: "09 10 11"
+seq -f '##%g##' 3 5                           # with a specific format: "##3## ##4## ##5##"
+seq -s ':' 4                                  # with a separator: "1:2:3:4"
+%%
+
+
+/// linux bash terminal: bash history
+history | less
+history 5                                     # last 5 commands
+!2008                                         # run a command using its history ID
+!text                                         # run the last command with a starting 'text'
+!!                                            # rerun the last command
+!2000:p                                       # just print the command, do not execute
+history -c                                    # clean history from redundant entries
+
+history | grep 'shred'                        # the better is to use reverse-search: CTRL+R
+                                              # CTRL+R to cycle, CTRL+G to exit, CTRL+O to accept
+
+echo !$                                       # reuse the last argument from previous commands
+echo !*                                       # reuse them all
+%%
+
+
+/// docker: image/volume/container location
+ls /var/lib/docker/overlay2
+sudo docker info | less                       # 'Docker Root Dir'
+docker inspect alpine                         # specific image: :/GraphDriver/Data/MergedDir
+
+docker run -ti -d alpine
+docker ps
+docker inspect confident_banzai               # running image location
+
+ls /var/lib/docker/volumes                    # volumes location
+docker volume inspect test-data               # :/Mountpoint
+
+
+# Specific Docker volume locations
+docker run -ti -d --name alpine-container -v test-data:/var/lib/app/content alpine
+docker exec alpine-container sh -c "touch /var/lib/app/content/test.md"
+docker exec -ti alpine-container sh
+$ ls /var/lib/app/content
+$ exit
+docker volume ls
+sudo ls -l /var/lib/docker/volumes/test-data/_data
+
+# Specific Docker bind mounts locations
+mkdir /home/avimanyu/test-data
+docker run -ti -d --name alpine-container -v /home/avimanyu/test-data/:/var/lib/app/content alpine
+%%
+
+
+/// network linux: IP/NAT tables list/rules
+sudo iptables -t nat -L                       # IPv4 rules
+sudo iptables -t nat -L -n -v
+sudo ip6tables -t nat -L                      # IPv6 rules
+
+sudo apt install netstat-nat
+netstat-nat -n                                # NAT connections on an iptable firewall
+netstat-nat -S                                # SNAT connections
+netstat-nat -D                                # DNAT connections
+
+sudo apt install conntrack
+sudo conntrack -L                             # list/dump
+sudo conntrack -L -n                          # filter source NAT connections
+sudo conntrack -L -g                          # filter destination NAT connections
+sudo conntrack -L -j                          # filter any NAT connection
+%%
+
+
+/// linux filesystem: ZFS storage pool integrity
+zpool scrub pool_name_here                    # an explicit scrubbing of all the pools
+zpool status -v pool_name_here                # the current health status for the given storage
+
+zpool list                                    # storage pools + health status + space
+zpool status
+zpool scrub zroot                             # scrub: check ZFS for errors etc. for 'zroot' pool
+zpool scrub -w zroot                          # wait before returning
+zpool scrub -p zroot                          # pause scrubbing
+zpool scrub zroot                             # resume paused scrubbing
+zpool scrub -s zroot                          # stop scrubbing
+
+zpool status -v zroot                         # report scrubbing progess and summarize
+zpool resilver zroot                          # resilver (automatic dynamic consistency restoration)
+%%
+
+
+/// linux filesystem: repair linux filesystem
+sudo fdisk -l
+sudo umount /dev/sda5
+sudo fsck -p /dev/sda5
+sudo mount /dev/sda5
+%%
+
+
+/// linux network: NIC list
+# NIC: Network Interface Controller
+
+ifconfig -a
+ifconfig -a | sed 's/[ \t].*//;/^$/d'
+ip link show
+ip addr
+ip addr show | awk '/^[1-9]/ {print $2}'
+ip -s link
+ip -o link show | awk -F': ' '{print $2}'
+ls /sys/class/net
+cat /proc/net/dev
+netstat -i
+nmcli device status
+nmcli connection show
+hwinfo --short --network
+lshw -class network -short
+inxi -N
+lspci | egrep -i 'network|ethernet|wireless|wi-fi'
+%%
+
+
+/// files linux: backup tools
+# directories synchronization
+rsync -avrh --delete --progress /source /target
+rsync --archive --verbose --recursive --human-readable --delete --dry-run /source /target | less
+
+# SSH + SCP (Secure Copy)
+sudo ssh-keygen -t rsa 
+sudo ssh-copy-id ubuntu@18.118.208.XX
+ssh ubuntu@18.118.208.XX 
+sudo scp -r ~/data user@remote_server_ip:/remote/backup
+sudo scp -r user@remote_server_ip:/remote/data ~/backup/ 
+
+# dump & restore
+sudo dump -0f /my_backups/boot.0 /boot
+sudo dump -0f /my_backups/configurations.dump /etc/default /etc/network 
+sudo restore -tf /my_backups/configurations.dump 
+sudo restore -xf /my_backups/configurations.dump 
+%%
+
+
+/// install office-suite: softmaker-freeoffice-2021
+sudo -i
+wget -qO - https://shop.softmaker.com/repo/linux-repo-public.key | apt-key add -
+echo "deb https://shop.softmaker.com/repo/apt stable non-free" > /etc/apt/sources.list.d/softmaker.list
+apt update
+apt install softmaker-freeoffice-2021
+%%
+
+
+/// git: aliases
+git config --global alias.com commit
+git com
+cat ./.gitconfig
+%%
+
+
+/// ubuntu gnome install: gnome extension
+# https://extensions.gnome.org/
+
+mkdir -p ~/.local/share/gnome-shell/extensions
+tar -xf extension.tar.gz -C ~/.local/share/gnome-shell/extensions
+# search: extension:/metadata.json/uuid
+# rename: extension_catalogue to uuid
+# restart: gnome or linux
+
+sudo apt install gnome-shell-extensions
+gnome-extensions enable "$uuid"
+gnome-tweaks:/Extensions/Manually installed
+%%
+
+
+/// install darling: MacOS programs on Linux
+# https://github.com/darlinghq/darling/releases
+sudo gdebi darling-dkms_0.1.20200331.testing_amd64.deb
+sudo gdebi darling_0.1.20200331.testing_amd64.deb
+sudo apt install -f
+
+darling shell
+bash --version
+uname
+ls -l /Volumes/SystemRoot/bin/uname
+sw_vers
+darling shutdown
+%%
+
+
+/// ubuntu file-manager install: yaru-colors (colorful folder icons)
+sudo apt update
+sudo apt install git gnome-tweaks
+git clone https://github.com/Jannomag/Yaru-Colors.git
+cd Yaru-Colors/
+./install.sh
+gnome-tweaks:/Appearance/Icons/Yaru-Amber
+%%
+
+
+/// ubuntu bash: GUI dialog boxes in scripts
+sudo apt install zenity
+zenity --version
+
+zenity --error --title "Error Message" --width 500 --height 100 --text "Error"
+zenity --warning --title "Warning Message" --width 500 --height 100 --text "Warning"
+zenity --info --title "Info Message" --width 500 --height 100 --text "Info"
+zenity --info --title "Info Message" --width 500 --height 100 --text "Question"
+zenity --password --username
+zenity --text-info --title "Help" --filename "/etc/hosts" --checkbox "checkbox"
+zenity --calendar --title="calendar" --text="Select date" --year 2015 --month 7 --day 15
+zenity --file-selection --title "Select files" --filename "/home/${USER}/" --multiple --separator :
+zenity --forms --text "wizard" --add-entry "form1" --add-entry "for2" --add-password "form3"
+zenity --list --column "Player" --column "Club" Messi PSG Neymar PSG Ronaldo Manu
+zenity --list --checklist --column "checkbox" --column "Player" --column "Country" FALSE Messi Argentina
+
+USR=$(zenity --entry --width 500 --title "Entry" --text "Type here:" --hide-text); 
+echo $USR
+
+COLOR_RGB=$(zenity --color-selection --show-palette)
+echo $COLOR_RGB
+
+(
+    echo 10
+    echo "# task 1"
+    sleep 5
+    echo 100
+    echo "# task 2"
+) | zenity --title "Progress Bar" --progress --auto-close
+%%
+
+
+/// megacmd
+# https://mega.nz/cmd
+
+sync local_folder mega_folder
+backup mega_folder remote_path --period="0 0 4 * * *" --num-backups=10
+get https://mega.nz/#F!ABcD1E2F!gHiJ23k-LMno45PqrSTUvw /local_folder 
+logout
+%%
+
+
+/// ubuntu linux network: ufw (uncomplicated firewall)
+sudo apt install ufw -y
+sudo ufw enable
+sudo systemctl status ufw
+sudo ufw status verbose
+sudo ufw status numbered
+
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+sudo ufw app list
+sudo ufw app info CUPS
+
+sudo nano /etc/default/ufw
+$ IPV6=yes
+sudo systemctl restart ufw
+
+sudo ufw allow ssh
+sudo ufw allow 3541/tcp
+sudo ufw deny ssh/tcp
+sudo ufw deny 3541/tcp 
+
+sudo ufw allow 'Nginx HTTP'
+sudo ufw allow http
+sudo ufw allow 80/tcp
+
+sudo ufw allow 'Nginx HTTPS'
+sudo ufw allow https
+sudo ufw allow 443/tcp
+sudo ufw allow 'Nginx Full'
+
+sudo ufw allow 6500:6800/tcp
+sudo ufw allow 6500:6800/udp
+sudo ufw allow 6500, 6501, 6505, 6509/tcp
+sudo ufw allow 6500, 6501, 6505, 6509/udp
+
+sudo ufw allow from 192.168.55.131
+sudo ufw allow from 192.168.55.131 to any port 3900
+sudo ufw allow from 192.168.1.0/24 to any port 3900
+sudo ufw allow in on eth2 to any port 3900
+
+sudo ufw deny from 203.13.56.121
+sudo ufw deny from 203.13.56.121/24
+sudo ufw deny from 203.13.56.121/24 to any port 80
+sudo ufw deny from 203.13.56.121/24 to any port 443
+
+sudo ufw status numbered
+sudo ufw delete 1
+sudo ufw delete allow 80/tcp
+
+sudo ufw logging low
+sudo ufw logging off
+sudo ufw tail -f /var/log/ufw.log
+sudo ufw tail /var/log/ufw.log -n 30
+
+sudo ufw --dry-run enable
+sudo ufw --dry-run disable
+
+sudo ufw reset
+sudo ufw status
+%%
+
+
+/// files symlinks: find broken symlinks
+sudo apt-get install symlinks
+symlinks .
+symlinks -rv
+symlinks -dr .
+
+find . -xtype l
+find . -xtype l ! -exec test -e {} \; -print
+find . -xtype l -exec ls -l {} \+
+find . -xtype l -delete
+find . -xtype l ! -exec test -e {} \; -delete
+%%
+
+
+/// files symlinks: alter it
+rm linkname
+ln -s /some/new/path linkname
+
+ln -s -f .profile test                           # force to call unlink() system call
+ln -sfn /some/new/path linkname                  # for directories
+
+ln -s  /some/new/path newlinkname
+mv -T newlinkname linkname                       # atomic change
+mv -fT newlinkname linkname                      # atomic change for directories
+
+man 7 symlink 
+man symlinks
+%%
+
+
+/// linux filesystem: mount bitlocker partition
+sudo apt install dislocker
+sudo mkdir -p /media/decrypt
+sudo mkdir -p /media/windows-mount
+sudo lsblk
+sudo dislocker <partition_name> -u<password> -- /media/decrypt
+sudo dislocker <partition_name> -p<recovery_password> -- /media/decrypt
+sudo mount -o loop /media/decrypt/dislocker-file /media/windows-mount
+sudo mount -t ntfs-3g -o loop /media/decrypt/dislocker-file /media/windows-mount
+sudo mount -t exFAT-fuse -o loop /media/decrypt/dislocker-file /media/windows-mount
+sudo umount /media/decrypt
+sudo umount /media/windows-mount
+%%
+
+
+/// linux sound: stereo to mono
+pacmd list-sinks | grep name:
+pacmd load-module module-remap-sink sink_name=mono master=alsa_output.pci-0000_00_1f.3.analog-stereo channels=2 channel_map=mono,mono
+ubuntu:/Settings/Sound/Output/Output Device/<sink-mono>
+speaker-test -c 2 -t sine
+
+pacmd load-module module-remap-sink sink_name=mono master=$(pacmd list-sinks | grep -m 1 -oP 'name:\s<\K.*(?=>)') channels=2 channel_map=mono,mono
+pacmd unload-module module-remap-sink
+
+# /etc/pulse/default.pa
+load-module module-remap-sink sink_name=mono master=NAME_OF_AUDIO_SINK_GIVEN_BY_PREVIOUS_COMMAND 
+%%
+
+
+/// package-manager apt: reverse dependencies
+# reverse dependencies — packages that a given package requires to work
+apt-cache rdepends bash
+apt-rdepends -r bash
+apt-cache showpkg bash
+aptitude why bash
+
+# recursive dependencies — reverse depends + dependency packages of those dependent ones
+apt-rdepends bash | head -10
+
+# reverse recursive dependencies — reverse depends of a dependent package
+apt-rdepends --reverse bash
+
+# types of dependencies:
+# Depends, PreDepends, Suggests, Recommends, Conflicts, Replaces, Obsoletes
+%%
+
+
+/// issue apt package-manager: 'The following packages have unmet dependencies'
+sudo apt-get update
+sudo apt-get clean
+sudo apt-get autoremove
+
+sudo apt --fix-broken install                    # if previous not working
+sudo apt-get update && sudo apt-get upgrade
+sudo dpkg --configure -a
+sudo apt-get install -f
+
+sudo aptitude install npm                        # conflicts recognition
+%%
+
+
+/// python issue: python as an alias to python3 systemwide
+sudo apt install python-is-python3
+%%
+
+
+/// linux audio jack midi: jack
+# https://kaerumy.medium.com/audio-and-midi-controller-on-ubuntu-linux-1058e00bc7d0
+# http://web.archive.org/web/20100411024921/http://tuxradar.com/content/how-it-works-linux-audio-explained
+
+# 3: audio servers (JACK, PulseAudio, GStreamer, Xine, Phonon) — audio streams directed to apps
+# 2: OSS (old), ALSA (standard), FFADO (FireWire) — sound architecture on the kernel layer
+# 1: hardware — receiving signals
+
+# [technology]  [input]                                 →  [output]
+# ALSA:         PulseAudio/JACK/GStreamer/Xine/SDL/ESD  →  hardware/OSS
+# PulseAudio:   Gstreamer/Xine/ALSA                     →  ALSA/JACK/ESD/OSS
+# GStreamer:    Phonon                                  →  ALSA/PulseAudio/JACK/ESD
+# JACK:         PulseAudio/GStreamer/ALSA               →  OSS/FFADO/ALSA
+# FFADO:        JACK                                    →  audio hardware
+# Xine:         Phonon                                  →  PulseAudio/ALSA/ESD
+# Phonon:       Qt/KDE apps                             →  GStreamer/Xine
+
+
+# Conflicts with wine/winehq-staging!
+sudo apt install ubuntustudio-audio linux-lowlatency
+sudo apt install ubuntustudio-installer
+ubuntustudio-controls
+%%
+
+
+/// linux filesystem users: know yourself
+id                  # RUID & EUID: real and effective user IDs; consider LD_PRELOAD
+whoami              # EUID: effective user ID
+w                   # who is logged on
+%%
+
+
+/// vivaldi issue: "N: Skipping acquire of configured file 'main/binary-i386/Packages' as repository 'https://repo.vivaldi.com/archive/deb stable InRelease' doesn't support architecture 'i386'"
+sudo nano /etc/apt/sources.list.d/vivaldi.list
+$ deb [arch=amd64] https://repo.vivaldi.com/archive/deb/ stable main
+sudo nano /etc/apt/sources.list
+$ # deb https://repo.vivaldi.com/archive/deb/ stable main
+sudo apt update
+%%
+
+
+/// issue filesystem hardware linux: "'fsyncing/closing /dev/sda: Input/Output error'"
+# I/O errors usually indicate failing hardware.
+# (1) Try to replace older cables and defective HDD.
+# (2) Try to change mode PATA to AHCI in BIOS/EFI.
+
+# (3) Try to obtain any additional information.
+dmesg | tail
+lsblk
+ls -l /dev/disk/by-id
+gnome-disk-utility
+smartctl -a /dev/sdb
+sudo gsmartcontrol
+sudo gparted -lu
+sudo parted -l
+sudo dd if=/dev/sda of=/dev/null count=1
+sudo dd if=/dev/zero of=/dev/sdb bs=512 count=1
+
+# (4) Try to repair filesystem.
+sudo badblocks -sv /dev/sda > bbr.txt
+sudo fsck -t ext4 bbr.txt /dev/sda1
+sudo testdisk
+
+# (5) Try to use repair live CD.
+%%
+
+
+/// filesystem issue: 'device reported invalid CHS sector 0'
+# (1) Unfroze SSD if it has been frozen.
+# (2) Try to restore the disk geometry.
+
+dmesg -w
+sudo hdparm -I /dev/sdb
+smartctl -a /dev/sdb
+
+sudo apt-get install testdisk
+sudo sfdisk -g /dev/sda 
+!:/testdisk/Geometry/Quick Analyze
+%%
+
+
+/// filesystem hardware ssd: unfreeze SSD
+# Make it hot-swappable on BIOS/EFI first.
+
+sudo systemctl suspend
+sudo hdparm -I /dev/sda
+sudo hdparm --dco-identify /dev/sda
+sudo hdparm -I /dev/sda
+%%
+
+
+/// files terminal linux: ranges in a shell (brace expansion)
+# https://wiki.bash-hackers.org/syntax/expansion/brace
+
+mkdir {2010-2020}-{01-12} 
+touch {1..10}.txt
+touch {1..10..2}
+systemctl restart app9-{server,client,test}
+echo {A..C}{1..3}
+echo b{all, ell, oat, eef}
+echo {a,b{1..3},c}
+%%
+
+
+/// network linux files: mobile broadband plans
+ls -1 /etc/NetworkManager/system-connections/
+sudo cat '/etc/NetworkManager/system-connections/Play Online Default.nmconnection' | less
+%%
+
+
+/// terminal apt linux: list PPAs
+# Third-party repos + PPAs + base repos
+apt-cache policy
+apt-cache policy | grep http | awk '{print $2 $3}' | sort -u
+
+grep ^ /etc/apt/sources.list /etc/apt/sources.list.d/*
+grep -r --include '*.list' '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/
+grep -r --include '*.list' '^deb ' /etc/apt/ | sed -re 's/^\/etc\/apt\/sources\.list((\.d\/)?|(:)?)//' -e 's/(.*\.list):/\[\1\] /' -e 's/deb http:\/\/ppa.launchpad.net\/(.*?)\/ubuntu .*/ppa:\1/'
+sed -r -e '/^deb /!d' -e 's/^([^#]*).*/\1/' -e 's/deb http:\/\/ppa.launchpad.net\/(.+)\/ubuntu .*/ppa:\1/' -e "s/.*/sudo add-apt-repository '&'/" /etc/apt/sources.list /etc/apt/sources.list.d/*
+*/
+%%
+
+
+/// terminal linux apt: add/remove PPA
+sudo add-apt-repository ppa:thomas-schiex/blender
+sudo apt update
+
+
+# remove
+sudo add-apt-repository --remove ppa:thomas-schiex/blender
+sudo rm /etc/apt/sources.list.d/thomas-schiex-ubuntu-blender-bionic.list
+
+# purge: remove and downgrade packages
+sudo apt-get install ppa-purge
+ppa-purge ppa:thomas-schiex/blender
+%%
+
+
+/// linux files terminal: hexadecimal/binary view
+xxd -b hello.c                                             # binary view
+xxd hello.c                                                # hexadecimal view
+xxd -l 16 -p /dev/random
+hexdump -C yourfile.bin
+echo -n 'Hello world!' | hd
+vi your_filename                                           # ESC → :%!xxd
+od -xc filename                                            # fallback (old)
+strings <binary_filename>
+hexyl weird.txt
+
+readelf -a /bin/bash                                       # analyze
+readelf -h /bin/bash                                       # headers
+readelf -l /bin/bash                                       # segments
+readelf -S /bin/sh                                         # sections
+
+
+sudo apt install hexyl
+sudo apt install ghex
+sudo apt install dhex
+sudo apt install hexedit
+sudo apt install hexcurse
+sudo apt install bless
+sudo apt install hexdiff
+sudo apt install vbindiff
+
+
+echo abc | od -A n -v -t x1 | tr -d ' \n'                  # GNU
+echo abc | hexdump -ve '/1 "%02x"'                         # BSD/POSIX
+
+head -c1024 /dev/urandom | xxd -p | tr -d $'\n'            # large streams (no newlines)
+head -c1024 /dev/urandom | hexdump '-e"%x"'
+
+echo -n $'\x12\x34' | xxd -p                               # different endianness
+echo -n $'\x12\x34' | hexdump -e '"%x"'                    # also, hexdump will strip leading zeros
+echo -n $'\x12\x34' | hexdump -e '/1 "%x"'                 # the same endianness
+
+dd bs=1 count=1 if=/dev/urandom 2>/dev/null  | hexdump -e '"%x"'
+%%
+
+
+/// aria2c
+aria2c http://example.org/mylinux.iso
+aria2c http://a/f.iso ftp://b/f.iso
+aria2c -x2 http://a/f.iso
+aria2c http://example.org/mylinux.torrent
+aria2c 'magnet:?xt=urn:btih:248D0A1CD08284299DE78D5C1ED359BB46717D8C'
+aria2c http://example.org/mylinux.metalink
+aria2c -p local-file.metalink
+aria2c -i uris.txt
+%%
+
+
+/// issue: "AttributeError: 'UbuntuDistroInfo' object has no attribute 'get_all'"
+# python 3.8
+/usr/bin/python3 -m pip install --upgrade pip
+pip3 install distro-info
+pip freeze --local | grep -v '^-e' | cut -d = -f 1  | xargs -n1 pip install -U
+
+# unspecified
+sudo python3 -m pip uninstall distro-info
+sudo apt reinstall python3-distro-info
+
+# python 3.7
+wget https://salsa.debian.org/debian/distro-info/raw/master/python/distro_info.py 
+sudo cp /usr/local/lib/python3.7/dist-packages/distro_info.py  /usr/local/lib/python3.7/dist-packages/distro_info.py.old
+sudo cp distro_info.py /usr/local/lib/python3.7/dist-packages/distro_info.py
+%%
+
+
+/// issue wine: "E: The repository 'https://dl.winehq.org/wine-builds/ubuntu focal Release' no longer has a Release file"
+# https://forum.winehq.org/viewtopic.php?t=31621
+
+wget -nc https://dl.winehq.org/wine-builds/winehq.key
+sudo apt-key add winehq.key
+sudo apt update
+%%
+
+
+/// httpie: wget/curl alternative
+sudo apt install httpie
+
+https httpie.io/hello
+http PUT pie.dev/put X-API-Token:123 name=John
+http -f POST pie.dev/post hello=World
+http -v pie.dev/get
+http --offline pie.dev/post hello=offline
+http pie.dev/post < files/data.json
+http pie.dev/image/png > image.png
+http --download pie.dev/image/png
+
+http --session=logged-in -a username:password pie.dev/get API-Key:123
+http --session=logged-in pie.dev/headers
+http localhost:8000 Host:example.com
+%%
+
+
+/// bat: cat alternative
+sudo apt install bat
+
+bat README.md
+curl -s https://sh.rustup.rs | bat
+yaml2json .travis.yml | json_pp | bat -l json
+bat -A /etc/hosts
+%%
+
+
+/// ncdu: du alternative
+ncdu /dir/
+ncdu -x /
+ssh -C user@system ncdu -o- / | ./ncdu -f-
+
+ncdu -1xo- / | gzip >export.gz
+zcat export.gz | ncdu -f-
+%%
+
+
+/// duf: du alternative
+DUF_VERSION=$(curl -s "https://api.github.com/repos/muesli/duf/releases/latest" | grep -Po '"tag_name": "v\K[0-9.]+')
+curl -Lo duf.deb "https://github.com/muesli/duf/releases/latest/download/duf_${DUF_VERSION}_linux_amd64.deb"
+sudo apt install -y ./duf.deb
+duf -version
+
+rm -rf duf.deb
+sudo apt purge --autoremove -y duf
+
+duf
+%%
+
+
+/// files fdupes: find duplicates
+sudo apt install fdupes
+fdupes .
+fdupes -r .
+fdupes -N .
+fdupes -d .
+fdupes . > output.txt
+%%
+
+
+/// network linux: default gateway 
+route -n
+ip r
+ip route
+ip route show
+netstat -r
+routel | grep 'default'
+%%
+
+
+/// linux: process id and parent process id
+pidof exact_process_name
+ps aux | grep -i partial_process_name
+pgrep partial_or_exact_process_name
+pgrep -l partial_or_exact_process_name
+pstree -p -a | less
+
+ps -o ppid= -p P_ID
+echo $$
+echo ${PPID}
+%%
+
+
+/// files: verify signatures
+# https://serverfault.com/questions/896228/how-to-verify-a-file-using-an-asc-signature-file#896232
+# https://support.torproject.org/tbb/how-to-verify-signature/
+
+gpg --verify gcc-11.2.0.tar.gz.sig gcc-11.2.0.tar.gz
+gpg2 --verify program.sig program.tar.gz
+
+# verify linux kernel from kernel.org
+gpg2 --locate-keys torvalds@kernel.org gregkh@kernel.org
+unxz linux-5.17.2.tar.xz
+gpg2 --verify unxz linux-5.17.2.tar.sign
+gpg2 --tofu-policy good 38DBBDC86092693E
+gpg2 --trust-model tofu --verify linux-5.17.2.tar.sign
+
+# inspecting with a .asc file
+wget https://ossec.github.io/files/OSSEC-ARCHIVE-KEY.asc
+gpg --keyid-format long --list-options show-keyring OSSEC-ARCHIVE-KEY.asc
+gpg --import OSSEC-ARCHIVE-KEY.asc
+wget https://github.com/ossec/ossec-hids/archive/2.9.3.tar.gz
+https://github.com/ossec/ossec-hids/releases/download/2.9.3/ossec-hids-2.9.3.tar.gz.asc
+gpg --verify ossec-hids-2.9.3.tar.gz.asc 2.9.3.tar.gz
+
+# tor-browser.asc
+gpg --auto-key-locate nodefault,wkd --locate-keys torbrowser@torproject.org
+gpg --output ./tor.keyring --export 0xEF6E286DDA85EA2A4BA7DE684E2C6E8793298290
+gpgv --keyring ./tor.keyring ~/Downloads/tor-browser-linux64-9.0_en-US.tar.xz.asc ~/Downloads/tor-browser-linux64-9.0_en-US.tar.xz
+%%
+
+
+/// linux terminal: run command in background
+jobs                                        // background tasks
+some_command &                              // run in background
+bg                                          // CTRL+Z → bg : send run command to background
+fg job_id                                   // bring a process to foreground
+nohup some_command &                        // run process after exiting terminal
+firezilla </dev/null &>/dev/null &          // make terminal free from running process
+%%
+
+
+/// linux network: list open ports
+lsof -i -P -n | grep 'LISTEN'                                        // TCP & UDP ports
+nc -z -v 127.0.0.1 1-65535 2>&1 | grep -v 'Connection refused'
+
+netstat -a                   // TCP & UDP ports
+netstat -au                  // UDP ports
+netstat -l                   // listening ports
+
+ss                           // open ports
+ss -a                        // all ports
+ss -l                        // listening sockets
+ss -t                        // all TCP connections
+ss -ua                       // all UDP connections
+ss -lt                       // listening TCP sockets
+ss -lu                       // listening UDP sockets
+%%
+
+
+/// linux install: kernel from kernel.org
+# https://debian-handbook.info/browse/pl-PL/stable/sect.kernel-compilation.html
+
+# first: verify gpg signature, and then:
+# tar xpvf linux-3.12-rc6.tar.xz
+cd linux-3.12-rc6/
+make mrproper
+cat /boot/config-`uname -r` > .config
+make menuconfig
+make -j4 && make modules
+sudo make modules_install
+make install
+%%
+
+
+/// linux ubuntu: upgrade lts distro to newer lts version
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get dist-upgrade -y
+sudo apt-get install update-manager-core
+sudo nano /etc/update-manager/release-upgrades
+do-release-upgrade --check-dist-upgrade-only --devel-release
+sudo do-release-upgrade -d --allow-third-party
+%%
+
+
+/// issue: "Gtk-Message: Failed to load module"
+# Gtk-Message: Failed to load module "gail"
+# Gtk-Message: Failed to load module "atk-bridge"
+sudo apt install libatk-adaptor:i386 libgail-common:i386 libatk-adaptor libgail-common
+
+# Gtk-Message: Failed to load module "canberra-gtk-module"
+sudo apt install libcanberra-gtk-module libcanberra-gtk3-module libcanberra-gtk-module:i386 libcanberra-gtk3-module:i386
+
+# Gtk-WARNING **:: Unable to locate theme engine in module_path: "adwaita"
+sudo apt install gnome-themes-standard gnome-themes-extra
+sudo apt install gtk2-engines gtk2-engines:i386
+sudo apt install adwaita-icon-theme-full
+
+# Gtk-WARNING **:: Unable to locate theme engine in module_path: "pixbuf"
+sudo apt install gtk2-engines-pixbuf gtk2-engines-pixbuf:i386
+%%
+
+
+/// curl: download file instead of html content
+curl -JLO https://github.com/archlinux/archinstall/archive/refs/tags/v2.4.2.tar.gz
+%%
+
+
+/// ubuntu issue: brightness
+sudo add-apt-repository ppa:apandada1/brightness-controller
+sudo apt update
+sudo apt install brightness-controller
+
+sudo gedit /etc/default/grub
+# from: GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+# to:   GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi_backlight=vendor"
+update-grub
+
+SYSTEM_DISPLAY_NAME=$(xrandr | grep " connected" | cut -f1 -d " ")
+xrandr --output "$SYSTEM_DISPLAY_NAME" --brightness 0.7
+unset SYSTEM_DISPLAY_NAME
+%%
+
+
+/// apt issue: "Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg)"
+# https://askubuntu.com/questions/1403556/key-is-stored-in-legacy-trusted-gpg-keyring-after-ubuntu-22-04-update
+
+apt-key list | less                                        # AA3E7F5E
+ls -lshF /etc/apt/sources.list.d | less                    # softmaker.list
+
+sudo apt-key export AA3E7F5E | sudo gpg --dearmour -o /usr/share/keyrings/softmaker.gpg
+sudo -H gedit /etc/apt/sources.list.d/softmaker.list
+# deb [arch=amd64 signed-by=/usr/share/keyrings/softmaker.gpg] ${URL} stable non-free
+sudo apt update
+sudo apt-key del AA3E7F5E
+%%
+
+
+/// apt flatpak issue: "Found icon of unknown type 'unknown' in 'system/flatpak/flatpak/cc.nift.nsm/*'"
+# https://github.com/flathub/cc.nift.nsm/issues/3
+# https://github.com/flatpak/flatpak/issues/4642
+
+appstreamcli validate cc.nift.nsm.appdata.xml --explain
+appstreamcli refresh-cache --force
+
+grep cc.nift.nsm /var/lib/flatpak/appstream/flathub/x86_64/active/appstream.xml
+find /var/lib/flatpak/ -name 'icon'
+%%
+
+
+/// convert: hex to ascii
+# https://linuxhandbook.com/convert-hex-ascii/
+
+echo '4c696e757868616e64626f6f6b20313233' | xxd -r -p && echo ''
+printf '\x4c\x69\x6e\x75\x78\x68\x61\x6e\x64\x62\x6f\x6f\x6b\x20\x31\x32\x33' && echo ''
+echo "16i 4C696E757868616E64626F6F6B20313233 P" | dc && echo ''
+echo 4c696e757868616e64626f6f6b20313233 | perl -ne 's/([0-9a-f]{2})/print chr hex $1/gie' && echo ''
+echo -n 4c696e757868616e64626f6f6b20313233 | sed 's/\([0-9A-F]\{2\}\)/\\\\\\x\1/gI' | xargs printf && echo ''
+cat hex.txt | xxd -r -p && echo ''
+%%
+
+
+/// network: ping ipv6 addresses
+# https://linuxhandbook.com/ping-ipv6/
+
+ping 2606:4700:20::681a:c82            # linuxhandbook.com
+ping -6 google.com                     # unreachable if not enabled on local system
+ip -6 route                            # 'default via' is default IPv6 gateway
+%%
+
+
+/// issue: "FATAL:gpu_data_manager_impl_private.cc(415)] GPU process isn't usable. Goodbye."
+# https://github.com/balena-io/etcher
+# https://stackoverflow.com/questions/68874940/gpu-process-isnt-usable-goodbye
+# https://stackoverflow.com/questions/65679630/fatalgpu-data-manager-impl-private-cc439-gpu-process-isnt-usable-goodbye
+# https://github.com/marktext/marktext/issues/2675
+
+./balenaEtcher-1.7.9-x64.AppImage --in-process-gpu
+./balenaEtcher-1.7.9-x64.AppImage --disable-gpu
+./balenaEtcher-1.7.9-x64.AppImage --disable-gpu-sandbox
+%%
+
+
+/// network: activate and query interfaces
+# https://linuxhandbook.com/ifup-ifdown-ifquery/
+
+ip link show
+ifconfig -a
+
+sudo apt install ifupdown
+sudo ifup wlo1                         # activate wlo1 NIC
+sudo ifup -av                          # up all NICs
+sudo ifdown wlo1
+sudo ifdown -av                        # deactivate wlo1 NIC
+ifquery -l                             # list NICs
+ifquery -l --allow=hotplug             # USB hot-plug
+%%
+
+
+/// less: tutorial
+# LinuxHandbook | "How to Search in Less Command" | https://linuxhandbook.com/search-less-command/
+
+less file
+/pattern                # forward search for 'pattern'
+?pattern                # backward search for 'pattern'
+&pattern                # show only matching lines
+n                       # next match
+shift+n                 # previous match
+-I                      # case insensitivity
+
+less -I pattern filename
+less -Ip pattern filename
+%%
+
+
+

@@ -1,0 +1,712 @@
+/// programs: control.exe
+control.exe /name Microsoft.Troubleshooting                # Troubleshoot Properties
+control.exe system                                         # About Properties
+control.exe admintools                                     # Administrative Tools
+control.exe panel                                          # All Control Panel Items
+control.exe Desktop                                        # Background Properties
+control.exe Color                                          # Background Properties
+control.exe Folders                                        # File Explorer Options
+control.exe Fonts                                          # Fonts folder
+control.exe keyboard                                       # Keyboard Properties
+control.exe mouse                                          # Mouse Properties
+control.exe netconnections                                 # Network Connections folder
+control.exe printers                                       # Devices and Printers
+control.exe schedtasks                                     # Task Scheduler
+control.exe userpasswords2                                 # User Accounts
+%%
+
+
+/// programs: list
+notepad.exe                                      # Notepad
+mspaint.exe                                      # Paint
+write.exe                                        # WordPad
+cmd.exe                                          # Command Prompt
+calc.exe                                         # Calculator
+msconfig.exe                                     # System Configuration
+msinfo32.exe                                     # System Information
+regedit.exe                                      # Registry Editor
+regedt32.exe                                     # Registry Editor Utility
+winver.exe                                       # About Windows
+UserAccountControlSettings.exe                   # UAC Settings
+resmon.exe                                       # Resource Monitor
+taskmgr.exe                                      # Task Manager
+msra.exe                                         # Windows Remote Assistance
+rstrui.exe                                       # System Restore
+fsquirt.exe                                      # Bluetooth File Transfer
+charmap.exe                                      # Character Map
+dcomcnfg.exe                                     # Component Services
+dxdiag.exe                                       # DirectX Diagnostic Tool
+cleanmgr.exe                                     # Disk Clean-up for (%SystemRoot%)
+dfrgui.exe                                       # (Defragmenter and) Optimize Drives
+iscsicpl.exe                                     # iSCSI Initiator Properties
+%WinDir%\syswow64\odbcad32.exe                   # ODBC Data Source Administrator (64-bit)
+%WinDir%\system32\odbcad32.exe                   # ODBC Data Source Administrator (32-bit)
+RecoveryDrive.exe                                # Recovery Media Creator
+MdSched.exe                                      # Windows Memory Diagnostic
+verifier.exe                                     # Driver Verifier Manager
+sigverif.exe                                     # File Signature Verification
+iexpress.exe                                     # IExpress Wizard
+iexplore.exe                                     # Internet Explorer
+osk.exe                                          # On-Screen Keyboard
+eudcedit.exe                                     # Private Character Editor
+mstsc.exe                                        # Remote Desktop Connection
+cliconfg.exe                                     # SQL Server Client Network Utility
+netplwiz.exe                                     # User Accounts
+utilman.exe                                      # Ease of Access Properties
+explorer.exe                                     # File Explorer
+magnify.exe                                      # Magnifier
+shrpubw.exe                                      # Create A Shared Folder Wizard
+mobsync.exe                                      # Sync Centre
+sndvol.exe                                       # Volume Mixer
+OptionalFeatures.exe                             # Windows Features
+wmplayer.exe                                     # Windows Media Player
+mblctr.exe                                       # Windows Mobility Centre (laptops only)
+recdisc.exe                                      # Create a system repair disc
+SystemPropertiesAdvanced.exe                     # ::System Properties/Advanced
+SystemPropertiesComputerName.exe                 # ::System Properties/Computer Name
+SystemPropertiesHardware.exe                     # ::System Properties/Hardware
+SystemPropertiesRemote.exe                       # ::System Properties/Remote
+SystemPropertiesProtection.exe                   # ::System Properties/System Protection
+SystemPropertiesPerformance.exe                  # ::Performance Options/Visual Effects
+SnippingTool.exe                                 # Snipping Tool
+ComputerDefaults.exe                             # Windows Settings/Apps/Default apps
+mrt.exe                                          # Microsoft Windows Malicious Software Removal Tool
+rekeywiz.exe                                     # Encrypting File System (EFS)
+mmc.exe                                          # Microsoft Management Console
+msdt.exe                                         # Microsoft Support Diagnostic Tool
+narrator.exe                                     # Narrator
+DevicePairingWizard.exe                          # Add a device
+credwiz.exe                                      # Stored Usernames and Passwords
+cttune.exe                                       # ClearType Text Tuner
+colorcpl.exe                                     # Colour Management
+displayswitch.exe                                # SideBar/Project (connect a projector)
+sdclt.exe                                        # Back up and Restore (Windows 7)
+chkdsk.exe                                       # Check Disk Utility (Administrator)
+diskpart.exe
+ipconfig.exe /displaydns                         # DNS Cache Contents
+ipconfig.exe /flushdns                           # Delete DNS Cache Contents
+logoff.exe
+sfc.exe /scannow                                 # System File Checker
+shutdown.exe /r /t 0                             # Restarts computer
+shutdown.exe /s /t 0                             # Shutdown computer
+isoburn.exe                                      # Windows Disc Image Burner
+%%
+
+
+/// programs: Control Panel applets
+main.cpl                                         # Mouse Properties
+main.cpl keyboard	                         # Keyboard Properties
+appwiz.cpl                                       # Programs and Features
+timedate.cpl                                     # Date and Time
+desk.cpl                                         # Display Properties
+inetcpl.cpl                                      # Internet Properties
+mmsys.cpl                                        # Multimedia/Sound Properties
+mmsys.cpl sounds                                 # Sound Properties
+sysdm.cpl                                        # System Properties
+wscui.cpl                                        # Security and Maintenance
+hdwwiz.cpl                                       # Hardware Wizard/Device Manager
+joy.cpl                                          # Game Controllers
+ncpa.cpl                                         # Network Connections folder
+telephon.cpl                                     # Location Information
+powercfg.cpl                                     # Power Options
+intl.cpl                                         # Region
+firewall.cpl                                     # Windows Defender Firewall
+%%
+
+
+/// mmc addendments
+lusrmgr.msc                                      # Users and groups
+tpm.msc                                          # Trusted Platform Module
+gpedit.msc                                       # Local Group Policy Editor
+compmgmt.msc                                     # Computer Management
+devmgmt.msc                                      # Device Manager
+diskmgmt.msc                                     # Disk Management
+eventvwr.msc                                     # Event Viewer
+fsmgmt.msc                                       # Shared Folders
+lusrmgr.msc                                      # Local Users and Groups
+perfmon.msc                                      # Performance Monitor
+rsop.msc                                         # Resultant Set of Policy
+secpol.msc                                       # Local Security Policy
+services.msc                                     # Services
+certmgr.msc                                      # Certificates (current user)
+certlm.msc                                       # Certificates (local computer)
+PrintManagement.msc                              # Print Management
+taskschd.msc /s                                  # Task Scheduler
+WF.msc                                           # Windows Defender Firewall with Advanced Security
+wmimgmt.msc                                      # Windows Management Instrumentation (WMI)
+comexp.msc                                       # Component Services
+azman.msc                                        # Authorization Manager
+DevModeRunAsUserConfig.msc                       # Start Menu and Taskbar (User Manager)
+%%
+
+
+/// commands: various run options
+system.ini                                       # Windows loading information
+win.ini
+fonts                                            # Fonts folder
+migwiz                                           # %SystemRoot%\System32\migwiz folder
+slmgr.vbs /xpr                                   # License expiration date
+mailto:                                          # default mail client
+shell:ControlPanelFolder                         # All Control Panel Items
+shell:AppsFolder                                 # Applications folder
+shell:Startup                                    # Start-up folder
+shell:Common Startup
+shell:Fonts                                      # Fonts folder
+%%
+
+
+/// system: environment variables
+%PATH%
+%PathExt%
+%SystemRoot%                                     # C:\Windows
+%AppData%                                        # C:\Users\%Username%\AppData\Roaming
+%LocalAppData%                                   # C:\Users\%Username%\AppData\Local
+%AllUserProfile%                                 # C:\ProgramData
+%UserProfile%                                    # %SystemDrive%\Users\%UserName%
+%CommonProgramFiles%                             # C:\Program Files\Common Files
+%CommonProgramFiles(x86)%                        # C:\Program Files (x86)\Common Files
+%ComSpec%                                        # C:\Windows\System32\cmd.exe
+%HomePath%                                       # %HomeDrive%\Users\%UserName%
+%SystemDrive%                                    # C:
+%SystemRoot%                                     # %SystemDrive%\Windows
+%ProgramData%                                    # %SystemDrive%\ProgramData
+%ProgramFiles%                                   # %SystemDrive%\Program Files
+%ProgramFiles(x86)%                              # %SystemDrive%\Program Files (x86)
+%PSModulePath%                                   # %SystemRoot%\system32\WindowsPowerShell\v1.0\Modules\
+%PUBLIC%                                         # %SystemDrive%\Users\Public
+%TEMP%                                           # %SystemRoot%\TEMP
+%TMP%                                            # %USERPROFILE%\AppData\Local\Temp
+%WinDir%                                         # %SystemDrive%\Windows
+%%
+
+
+/// issue windows-defender: cannot install Windows Defender signatures through Windows Update
+cd %ProgramFiles%\Windows Defender
+MpCmdRun.exe -removedefinitions -dynamicsignatures
+MpCmdRun.exe -SignatureUpdate
+%%
+
+
+/// issue: "Users must enter a user name and password to use this computer"
+reg ADD “HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device” /v DevicePasswordLessBuildVersion /t REG_DWORD /d 0 /f
+netplwiz.exe
+%%
+
+
+/// windows-update: restart
+net stop wuauserv                                          # Windows Update services
+net stop cryptSvc                                          # Cryptographic service
+net stop bits                                              # Background Intelligent Transfer Service
+net stop msiserver                                         # MSI Installer
+
+ren C:\Windows\SoftwareDistribution SoftwareDistribution.old
+ren C:\Windows\System32\catroot2 Catroot2.old
+
+net start wuauserv
+net start cryptSvc
+net start bits
+net start msiserver
+%%
+
+
+/// uninstall: specific KB update
+# KB — Knowledge Base
+# KB3086255 — Windows DRM SafeDisc
+
+wusa /uninstall kb:3086255 /quiet /norestart
+%%
+
+
+/// telemetry hosts: Windows 10 telemetry domains
+# C:\WINDOWS\system32\drivers\etc\hosts
+
+127.0.0.1 vortex.data.microsoft.com
+127.0.0.1 vortex-win.data.microsoft.com
+127.0.0.1 telecommand.telemetry.microsoft.com
+127.0.0.1 telecommand.telemetry.microsoft.com.nsatc.net
+127.0.0.1 oca.telemetry.microsoft.com
+127.0.0.1 oca.telemetry.microsoft.com.nsatc.net
+127.0.0.1 sqm.telemetry.microsoft.com
+127.0.0.1 sqm.telemetry.microsoft.com.nsatc.net
+127.0.0.1 watson.telemetry.microsoft.com
+127.0.0.1 watson.telemetry.microsoft.com.nsatc.net
+127.0.0.1 redir.metaservices.microsoft.com
+127.0.0.1 choice.microsoft.com
+127.0.0.1 choice.microsoft.com.nsatc.net
+127.0.0.1 df.telemetry.microsoft.com
+127.0.0.1 reports.wes.df.telemetry.microsoft.com
+127.0.0.1 wes.df.telemetry.microsoft.com
+127.0.0.1 services.wes.df.telemetry.microsoft.com
+127.0.0.1 sqm.df.telemetry.microsoft.com
+127.0.0.1 telemetry.microsoft.com
+127.0.0.1 watson.ppe.telemetry.microsoft.com
+127.0.0.1 telemetry.appex.bing.net
+127.0.0.1 telemetry.urs.microsoft.com
+127.0.0.1 telemetry.appex.bing.net:443
+127.0.0.1 settings-sandbox.data.microsoft.com
+127.0.0.1 vortex-sandbox.data.microsoft.com
+127.0.0.1 survey.watson.microsoft.com
+127.0.0.1 watson.live.com
+127.0.0.1 watson.microsoft.com
+127.0.0.1 statsfe2.ws.microsoft.com
+127.0.0.1 corpext.msitadfs.glbdns2.microsoft.com
+127.0.0.1 compatexchange.cloudapp.net
+127.0.0.1 cs1.wpc.v0cdn.net
+127.0.0.1 a-0001.a-msedge.net
+127.0.0.1 statsfe2.update.microsoft.com.akadns.net
+127.0.0.1 sls.update.microsoft.com.akadns.net
+127.0.0.1 fe2.update.microsoft.com.akadns.net
+127.0.0.1 diagnostics.support.microsoft.com
+127.0.0.1 corp.sts.microsoft.com
+127.0.0.1 statsfe1.ws.microsoft.com
+127.0.0.1 pre.footprintpredict.com
+127.0.0.1 i1.services.social.microsoft.com
+127.0.0.1 i1.services.social.microsoft.com.nsatc.net
+127.0.0.1 feedback.windows.com
+127.0.0.1 feedback.microsoft-hohm.com
+127.0.0.1 feedback.search.microsoft.com
+127.0.0.1 rad.msn.com
+127.0.0.1 preview.msn.com
+127.0.0.1 ad.doubleclick.net
+127.0.0.1 ads.msn.com
+127.0.0.1 ads1.msads.net
+127.0.0.1 ads1.msn.com
+127.0.0.1 a.ads1.msn.com
+127.0.0.1 a.ads2.msn.com
+127.0.0.1 adnexus.net
+127.0.0.1 adnxs.com
+127.0.0.1 az361816.vo.msecnd.net
+127.0.0.1 az512334.vo.msecnd.net
+127.0.0.1 settings-win.data.microsoft.com
+0.0.0.0 a-0001.a-msedge.net
+0.0.0.0 a.ads1.msn.com
+0.0.0.0 a.ads2.msn.com
+0.0.0.0 ad.doubleclick.net
+0.0.0.0 adnexus.net
+0.0.0.0 adnxs.com
+0.0.0.0 ads.msn.com
+0.0.0.0 ads1.msads.net
+0.0.0.0 ads1.msn.com
+0.0.0.0 az361816.vo.msecnd.net
+0.0.0.0 az512334.vo.msecnd.net
+0.0.0.0 ca.telemetry.microsoft.com
+0.0.0.0 cache.datamart.windows.com
+0.0.0.0 choice.microsoft.com
+0.0.0.0 choice.microsoft.com.nsatc.net
+0.0.0.0 choice.microsoft.com.nstac.net
+0.0.0.0 compatexchange.cloudapp.net
+0.0.0.0 corp.sts.microsoft.com
+0.0.0.0 corpext.msitadfs.glbdns2.microsoft.com
+0.0.0.0 cs1.wpc.v0cdn.net
+0.0.0.0 db3wns2011111.wns.windows.com
+0.0.0.0 df.telemetry.microsoft.com
+0.0.0.0 diagnostics.support.microsoft.com
+0.0.0.0 fe2.update.microsoft.com.akadns.net
+0.0.0.0 fe3.delivery.dsp.mp.microsoft.com.nsatc.net
+0.0.0.0 feedback.microsoft-hohm.com
+0.0.0.0 feedback.search.microsoft.com
+0.0.0.0 feedback.windows.com
+0.0.0.0 i1.services.social.microsoft.com
+0.0.0.0 i1.services.social.microsoft.com.nsatc.net
+0.0.0.0 msnbot-207-46-194-33.search.msn.com
+0.0.0.0 oca.telemetry.microsoft.com
+0.0.0.0 oca.telemetry.microsoft.com.nsatc.net
+0.0.0.0 pre.footprintpredict.com
+0.0.0.0 preview.msn.com
+0.0.0.0 rad.msn.com
+0.0.0.0 redir.metaservices.microsoft.com
+0.0.0.0 reports.wes.df.telemetry.microsoft.com
+0.0.0.0 s0.2mdn.net
+0.0.0.0 services.wes.df.telemetry.microsoft.com
+0.0.0.0 settings-sandbox.data.microsoft.com
+0.0.0.0 settings-win.data.microsoft.com
+0.0.0.0 settings.data.microsof.com
+0.0.0.0 sls.update.microsoft.com.akadns.net
+0.0.0.0 spynet2.microsoft.com
+0.0.0.0 spynetalt.microsoft.com
+0.0.0.0 sqm.df.telemetry.microsoft.com
+0.0.0.0 sqm.telemetry.microsoft.com
+0.0.0.0 sqm.telemetry.microsoft.com.nsatc.net
+0.0.0.0 ssw.live.com
+0.0.0.0 statsfe1.ws.microsoft.com
+0.0.0.0 statsfe2.update.microsoft.com.akadns.net
+0.0.0.0 statsfe2.ws.microsoft.com
+0.0.0.0 survey.watson.microsoft.com
+0.0.0.0 telecommand.telemetry.microsoft.com
+0.0.0.0 telecommand.telemetry.microsoft.com.nsatc.net
+0.0.0.0 telemetry.appex.bing.net
+0.0.0.0 telemetry.microsoft.com
+0.0.0.0 telemetry.urs.microsoft.com
+0.0.0.0 v10.vortex-win.data.microsoft.com
+0.0.0.0 view.atdmt.com
+0.0.0.0 vortex-sandbox.data.microsoft.com
+0.0.0.0 vortex-win.data.microsoft.com
+0.0.0.0 vortex.data.microsoft.com
+0.0.0.0 watson.live.com
+0.0.0.0 watson.microsoft.com
+0.0.0.0 watson.ppe.telemetry.microsoft.com
+0.0.0.0 watson.telemetry.microsoft.com
+0.0.0.0 watson.telemetry.microsoft.com.nsatc.net
+0.0.0.0 wes.df.telemetry.microsoft.com
+0.0.0.0 win10.ipv6.microsoft.com
+%%
+
+
+/// filesystem: clear transaction ledger
+# VSS — Volume Shadow Copy
+
+vssadmin delete shadows /all
+vssadmin list shadowstorage
+fsutil resource setautoreset true C:\
+%%
+
+
+/// filesystem: clean up excess old transactions
+net localgroup Administrators localservice /add
+fsutil resource setautoreset true C:\
+netsh int ip reset resetlog.txt
+%%
+
+
+/// issue: cannot install updates (Windows 7)
+DISM.exe /Online /Cleanup-image /Restorehealth
+%%
+
+
+/// paths: wallpapers
+# Windows Spotlight wallpapers
+%USERPROFILE%/AppData\Local\Packages\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\LocalState\Assets
+
+# Lock screen wallpapers
+%WinDir%\Web\Screen
+%%
+
+
+/// windows-imaging: add/remove packages offline to Windows image
+# Add packages
+Dism /Get‐WIMInfo /WimFile:C:\test\images\install.wim
+Dism /Mount‐WIM /WimFile:C:\test\images\install.wim /Name:"Windows 7 HomeBasic" /MountDir:C:\test\offline
+Dism /Image:C:\test\offline /Add‐Package /PackagePath:C:\packages\package1.cab /PackagePath:C:\packages\package2.cab
+Dism /Unmount‐WIM /MountDir:C:\test\offline /Commit
+
+# Remove packages
+Dism /Get‐WIMInfo /WimFile:C:\test\images\install.wim
+Dism /Mount‐WIM /WimFile:C:\test\images\install.wim /Name:"Windows 7 HomeBasic" /MountDir:C:\test\offline
+Dism /Image:C:\test\offline /Get‐Packages
+DISM /Image:C:\test\offline /Remove‐Package /PackageName:Microsoft.Windows.Calc.Demo~6595b6144ccf1df~x86~en~1.0.0.0 /PackageName:Microsoft‐Windows‐MediaPlayer‐Package~31bf3856ad364e35~x86~~6.1.6801.0
+# You can use the /PackagePath option to point to the original source of the package.
+Dism /Unmount‐WIM /MountDir:C:\test\offline /Commit
+
+# Add/remove packages through answer file
+Dism /Get‐WIMInfo /WimFile:C:\test\images\install.wim
+Dism /Mount‐WIM /WimFile:C:\test\images\install.wim /name:"Windows 7 HomeBasic" /MountDir:C:\test\offline
+DISM /Image:C:\test\offline /Apply‐Unattend:C:\test\answerfiles\myunattend.xml
+Dism /Unmount‐WIM /MountDir:C:\test\offline /Commit
+
+# Add Windows updates
+md C:\mount\Windows
+Dism /Mount‐Image /ImageFile:"C:\Images\install.wim" /Index:1 /MountDir:C:\mount\Windows
+Dism /Add‐Package /Image:C:\mount\Windows /PackagePath:C:\MSU\Windows10‐KBxxxxxxx‐x64.msu /LogPath:AddPackage.log
+Dism /Unmount‐Image /MountDir:C:\mount\Windows /Commit
+# Recommended: Boot the image to complete the update process, and then clean up the image.
+Dism /Cleanup‐Image /Online /StartComponentCleanup /ResetBase
+C:\Windows\System32\Sysprep\sysprep /generalize /shutdown /oobe
+# Boot the PC to Windows PE.
+md C:\Recycler\Scratch
+DISM /Capture‐Image /ImageFile:"N:\Images\install_updated.wim" /CaptureDir:C: /Name: "Enterprise_x64 with ZDP KBxxxxxxx" /ScratchDir:C:\Recycler\Scratch
+Xcopy D:\ C:\InstallMedia /s /h
+md C:\mount\boot
+Dism /Mount‐Image /ImageFile:"C:\InstallMedia\sources\boot.wim" /Index:1 /MountDir:C:\mount\boot
+Dism /Add‐Package /PackagePath:/PackagePath:C:\MSU\Windows10‐KBxxxxxxx‐x64.msu /Image:C:\mount\boot /LogPath:AddPackage.log
+# Copy everything that’s been recently modified ﴾setup.exe, locale.nls, setupplatform.dll, setupplatform.exe, reagent.dll﴿ to the root of the install media.
+Dism /Unmount‐Image /MountDir:C:\mount\boot /Commit
+
+# Apply updates
+# Install The Windows Automated Installation Kit (WAIK) for Windows 7.
+# ::/Start/All Programs/Microsoft WindowsAIK/Deployment Tools Command Prompt/Run as administrator
+dism /mount-wim /wimfile:c:\images\install.wim /index:4/mountdir:c:\images\mount
+dism /image:c:\images\mount /get-packages
+dism /image:c:\images\mount /add-package /packagepath:c:\images\packages\Windows6.1-KB2533623-x86.msu
+dism /image:c:\images\mount /get-packages
+dism /unmount-wim /mountdir:c:\images\mount /commit
+%%
+
+
+/// windows-imaging install: WAIK supplement
+# http://www.microsoft.com/downloads/en/details.aspx?FamilyID=0aee2b4b-494b-4adc-b174-33bc62f02c5d
+# Download waik_supplement_en-us.iso and mount it.
+
+xcopy S:\ "C:\Program Files\Windows AIK\Tools\PETools" /ERDY
+xcopy S:\*winpe-dot3svc* "C:\Program Files\Windows AIK\Tools\PETools" /ERY
+%%
+
+
+/// windows-imaging: custom Windows PE image
+# Run ::/Windows AIK/Windows PE Tools Command Prompt
+# Allowed architectures: x86, amd64, ia64.
+
+copype.cmd x86 c:\winpe_x86
+imagex /mountrw c:\winpe_x86\winpe.wim 1 c:\winpe_x86\mount
+
+# Add a package and ensure if it has been installed:
+peimg /install=WinPE‐HTA‐Package c:\winpe_x86\mount\Windows
+peimg /install=*HTA* c:\winpe_x86\mount\Windows
+peimg /list c:\winpe_x86\mount\Windows
+
+# Copy ImageX and Package Manager to the image:
+copy "c:\program files\<version>\Tools\x86\imagex.exe" c:\winpe_x86\iso\
+xcopy "c:\program files\<version>\Tools\<architecture>\Servicing" c:\winpe_x86\iso\Servicing /s
+copy %windir%\system32\msxml6*.dll c:\winpe_x86\iso\Servicing
+
+# Remove any non-installed packages from the final image & replace default WIM to the custom one:
+peimg /prep c:\winpe_x86\mount\Windows
+imagex /unmount c:\winpe_x86\mount /commit
+copy c:\winpe_x86\winpe.wim c:\winpe_x86\ISO\sources\boot.wim
+%%
+
+
+/// windows-imaging boot: bootable Windows PE image
+# In case of CD-ROM:
+oscdimg ‐n ‐bc:\winpe_x86\etfsboot.com c:\winpe_x86\ISO c:\winpe_x86\winpe_x86.iso
+# For IA‐64 architecture, replace Etfsboot.com with Efisys.bin.
+# Burn the image.
+
+# In case of UDF filesystem, e.g. for pendrives:
+diskpart
+select disk 1
+clean
+create partition primary size=<size of device>
+select partition 1
+active
+format fs=fat32
+# format /FS:UDF
+assign
+exit
+xcopy c:\winpe_x86\iso\*.* /s /e /f f:\
+%%
+
+
+/// virtualbox boot windows-imaging: booting from a USB drive in virtualbox
+cd %programfiles%\Oracle\VirtualBox
+VBoxManage internalcommands createrawvmdk ‐filename C:\usb.vmdk ‐rawdisk \\.\PhysicalDrive1
+%%
+
+
+/// system: change system font
+# Goto: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts
+# Delete Segoe_UI* keys.
+# In: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\FontSubstitutes
+# Create: ::/New/StringValue/"Segoe UI"
+# Replace "Segoe UI" to chosen font name, e.g.: "Ubuntu Mono".
+%%
+
+
+/// system: enable/disable DEP
+# DEP — Data Execution Prevention
+# Microprocessor DEP support mode: NX for AMD, XD for Intel.
+# DEP is managed by Windows when EMET (Enhanced Mitigation Experience Toolkit) is installed.
+
+bcdedit.exe /set {current} nx AlwaysOn                     # enable
+bcdedit.exe /set {current} nx AlwaysOff                    # disable
+bcdedit.exe /set {current} nx OptIn                        # default
+shutdown /r /t 0
+wmic OS Get DataExecutionPrevention_SupportPolicy          # verify
+%%
+
+
+/// system powershell: convert between character sets
+gc -en utf8 in.txt | Out-File -en ascii out.txt
+# No ISO-8859-15 support; supported charsets are: unicode, utf7, utf8, utf32, ascii, bigendianunicode, default, oem.
+
+# DOS way:
+chcp 65001>NUL
+type ascii.txt > unicode.txt
+
+# https://github.com/amrali-eg/EncodingChecker
+%%
+
+
+/// system: information about errors
+net helpmsg
+
+certutil /error 2
+certutil /error 0x80070002
+certutil /error -2147024894
+certutil /error 2147942402
+certutil /error -0x7ff8fffe
+%%
+
+
+/// windows-store programs system: change download location
+# C:\Program Files\WindowsApps
+
+system:/Settings/System/Storage/"Change where new content is saved"/"New apps will save to"
+system:/Settings/Apps/Apps & features/"<App>"/Move
+
+regedit:/HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx
+→ Permissions/"ALL APPLICATION PACKAGES"/Advanced → Owner: Change/%UserName%/OK → "Replace owner on subcontainers and objects"/OK
+→ PackageRoot="<path>"
+%%
+
+
+/// system windows-store programs: apps list
+explorer.exe shell:::{4234d49b-0245-4df3-B780-3893943456e1}
+
+Get-AppxPackage -AllUsers
+Get-AppxPackage –AllUsers | Select Name, PackageFullName
+
+Get-AppxPackage | Get-AppxPackageManifest | 
+    ForEach-Object{
+        $_.Package.Applications.Application.VisualElements.DisplayName
+    }
+%%
+
+
+/// windows-store system programs: install appx package
+# All from Windows Store
+Get-AppXPackage *WindowsStore* -AllUsers | Foreach {Add-AppxPackage -DisableDevelopmentMode -Register "$($_.InstallLocation)\AppXManifest.xml"}
+
+# A single package
+# https://store.rg-adguard.net/
+# https://www.microsoft.com/pl-pl/store/apps/windows?icid=CNavAppsWindowsApps
+add-appxpackage -path C:\Users\%Username%\Downloads\Microsoft.FreshPaint_3.1.10383.0_x86__8wekyb3d8bbwe.Appx
+%%
+
+
+/// system activation: volume license key for Windows 10 after Windows 11 release
+slmgr.vbs /ipk W269N-WFGWX-YVC9B-4J6C9-T83GX
+slmgr.vbs /skms s8.now.im
+# slmgr.vbs /skms kms8.msguides.com
+slmgr.vbs /ato
+
+slmgr.vbs /upk
+slmgr.vbs /ipk W269N-WFGWX-YVC9B-4J6C9-T83GX
+slmgr.vbs /skms kms.xspace.in
+# slmgr.vbs /skms zh.us.to
+slmgr.vbs /ato
+
+Windows 10 Pro                               W269N-WFGWX-YVC9B-4J6C9-T83GX
+Windows 10 Pro N                             MH37W-N47XK-V7XM9-C7227-GCQG9
+Windows 10 Pro Workstations                  NRG8B-VKK3Q-CXVCJ-9G2XF-6Q84J
+Windows 10 Pro Workstations N                9FNHH-K3HBT-3W4TD-6383H-6XYWF
+Windows 10 Pro Education                     6TP4R-GNPTD-KYYHQ-7B7DP-J447Y
+Windows 10 Home                              TX9XD-98N7V-6WMQ6-BX7FG-H8Q99
+Windows 10 Home N                            3KHY7-WNT83-DGQKR-F7HPR-844BM
+Windows 10 Home Home Single Language         7HNRX-D7KGG-3K4RQ-4WPJ4-YTDFH
+Windows 10 Home Country Specific             PVMJN-6DFY6-9CCP6-7BKTT-D3WVR
+Windows 10 Education                         NW6C2-QMPVW-D7KKK-3GKT6-VCFB2
+Windows 10 Education N                       2WH4N-8QGBV-H22JP-CT43Q-MDWWJ
+Windows 10 Enterprise                        NPPR9-FWDCX-D2C8J-H872K-2YT43
+Windows 10 Enterprise N                      DPH2V-TTNVB-4X9Q3-TJR4H-KHJW4
+Windows 10 Enterprise G                      YYVX9-NTFWV-6MDM3-9PT4T-4M68B
+Windows 10 Enterprise G N                    44RPN-FTY23-9VTTB-MP9BX-T84FV
+Windows 10 Enterprise LTSC 2019              M7XTQ-FN8P6-TTKYV-9D4CC-J462D
+Windows 10 Enterprise N LTSC 2019            92NFX-8DJQP-P6BBQ-THF9C-7CG2H
+Windows Enterprise LTSB 2016                 DCPHK-NFMTC-H88MJ-PFHPY-QJ4BJ
+Windows Enterprise N LTSB 2016               QFFDN-GRT3P-VKWWX-X7T3R-8B639
+Windows 10 Core                              33QT6-RCNYF-DXB4F-DGP7B-7MHX9
+Windows 10 S (Lean)                          NBTWJ-3DR69-3C4V8-C26MC-GQ9M6
+
+slmgr.VBS /dli
+slmgr.vbs /dlv
+%%
+
+
+/// bitlocker tpm: convert pre-boot password to tpm-managed protection
+# Enable the TPM chip in the BIOS, and then:
+tpm.msc                                          # "Prepare TPM for use"
+
+# Enable TPM management for BitLocker
+manage-bde -protectors -add C: -tpm              # allow TPM to protect the volume
+manage-bde -protectors -get C:                   # get the new Numerical Password (save it with ID)
+manage-bde -protectors -delete C: -t Password    # remove the old password
+manage-bde protectors -get C:                    # delete protectors other than TPM or NP
+%%
+
+
+/// windows 11 virtual-machine: virtualbox
+# https://itsubuntu.com/install-microsoft-windows-11-on-virtualbox/
+
+VM minimum requirements: 4GB RAM, 2 core of CPU, 64GB VD, 256MB VRAM
+VM settings: EFI enabled, VBoxSVGA, 3D acceralation enabled
+
+Press Shift+F10 before clicking 'Install now' button to launch a command prompt
+regedit.exe
+[new Key] HKEY_LOCAL_MACHINE\SYSTEM\Setup\LabConfig
+[new 'DWORD (32-bit)'] → BypassTPMCheck=1
+[new 'DWORD (32-bit)'] → BypassRAMCheck=1
+[new 'DWORD (32-bit)'] → BypassSecureBootCheck=1
+Continue install by clicking on the 'Install now' button
+%%
+
+
+/// windows 11 tpm: "This PC can't run Windows 11. The PC must support TPM 2.0."
+# https://itsubuntu.com/tpm-2-0-windows-11-error-fixed/
+
+# Bypass TPM 2.0 requirement
+[new Key/DWORD] HKEY_LOCAL_MACHINE\SYSTEM\Setup\MoSetup\AllowUpgradesWithUnsupportedTPMOrCPU=1
+
+# Download DLL and replace it in Windows ISO
+appraiserres.dll (Compatibility Appraiser Supplemental Resources)
+%%
+
+
+/// system activation: volume license key for windows 11
+# https://msguides.com/windows-11
+
+Professional                                      W269N-WFGWX-YVC9B-4J6C9-T83GX
+Professional N                                    MH37W-N47XK-V7XM9-C7227-GCQG9
+Home                                              TX9XD-98N7V-6WMQ6-BX7FG-H8Q99
+Home N                                            3KHY7-WNT83-DGQKR-F7HPR-844BM
+Home Single Language                              7HNRX-D7KGG-3K4RQ-4WPJ4-YTDFH
+Home Country Specific                             PVMJN-6DFY6-9CCP6-7BKTT-D3WVR
+Education                                         NW6C2-QMPVW-D7KKK-3GKT6-VCFB2
+Education N                                       2WH4N-8QGBV-H22JP-CT43Q-MDWWJ
+Enterprise                                        NPPR9-FWDCX-D2C8J-H872K-2YT43
+Enterprise N                                      DPH2V-TTNVB-4X9Q3-TJR4H-KHJW4
+
+slmgr.vbs /ipk W269N-WFGWX-YVC9B-4J6C9-T83GX     # s8.uk.to, s9.uk.to
+slmgr.vbs /skms kms7.MSGuides.com                # https://status.msguides.com
+slmgr.vbs /ato                                   # 0x80070005 — server is busy
+slmgr.vbs /xpr                                   # 0xC004F056 — change server
+
+slmgr.vbs -dli
+Licensingdiag.exe -report %userprofile%\documents\report.txt -log %userprofile%\documents\repfiles.cab
+%%
+
+
+/// kms activation: install kms host
+# https://docs.microsoft.com/en-us/windows-server/get-started/kms-create-host
+
+Install-WindowsFeature -Name VolumeActivation -IncludeManagementTools
+Set-NetFirewallRule -Name SPPSVC-In-TCP -Profile Domain,Private -Enabled True
+vmw.exe
+%%
+
+
+/// file-system: symbolic link, hard link, junction
+# https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/mklink
+# https://docs.microsoft.com/en-us/windows/win32/fileio/hard-links-and-junctions
+
+mklink /d \folder \Users\User1\Documents                   # symbolic link
+mklink /h \file \User1\Documents\example.file              # hard link
+mklink /j C:\dir1 Z:\dir2                                  # junction (soft link)
+%%
+
+
+/// network: auto tuning level
+# https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/receive-window-auto-tuning-for-http
+# https://www.gry-online.pl/hardware/pieciokrotnie-przyspieszylem-pobieranie-gier-z-pc-game-pass-jak-t/zf2215e
+# https://www.thewindowsclub.com/window-auto-tuning-in-windows-10
+
+When the Receive Window Auto-Tuning feature is enabled for HTTP traffic, older routers, older firewalls, and older operating systems that are incompatible with the Receive Window Auto-Tuning feature may sometimes cause slow data transfer or a loss of connectivity. When this occurs, users may experience slow performance. Or, the applications may crash. These older devices do not comply with the RFC 1323 standard.
+
+netsh interface tcp show global
+netsh int tcp set global autotuninglevel=normal
+
+runas /user: local_computer_name \administrator cmd
+netsh interface tcp set global autotuninglevel=disabled
+%%
+
+
+

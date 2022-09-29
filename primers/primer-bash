@@ -1,0 +1,619 @@
+$ cat > hello.sh                   # creating a shell script
+$ echo 'Hello, World!'             # use CTRL+D to quit and save
+$ sudo chmod u+x hello.sh
+$ bash hello.sh                    # choosing interpreter BASH (Bourne-Again SHell)
+
+
+#!/bin/bash                        # SheBang, hashbang line; hash '#', bang '!'
+$ echo $PATH
+$ pwd                              # print working directory
+$ export PATH=$PATH:~/scripts
+$ echo $SHELL                      # for further cmds it is assumed that SHELL=/bin/bash
+
+
+#!/bin/bash
+echo "What's your name, stranger?"
+read name                          # reading user input
+echo "Hello, $name"                # dereference operator
+
+
+age=27                             # integer
+letter='c'                         # character
+color='blue'                       # string
+readonly PI=3.14159                # constant floating-point number
+
+
+TODAY=$(date)                      # command substitution (storing command result)
+TODAY=`date`                       # ditto, using back quotes (backticks), old approach
+$ echo "Hello, $(whoami)"          # using CS in a shell
+
+
+#!/bin/bash
+echo -n "Please enter a filename:"
+read filename
+n_lines=$(wc -l < $filename)       # stream redirection
+echo "$n_lines lines in $filename"
+
+
+#!/bin/bash
+nlines=$(wc -l < $1)               # positional argument $1, the first BASH argument
+echo "$nlines lines in $1"         # $0 - name of the bash script
+$ ./count_lines.sh /etc/group      # $n - the n-th argument
+$ 83 lines in /etc/group
+
+
+#!/bin/bash
+find / -iname $1 2> /dev/null      # location of the file pointed by $1
+$ ./find.sh boot.log
+$ /var/log/boot.log
+
+
+#!/bin/bash
+echo "Built-in special BASH variables:"
+echo "Name of the script: $0"                              # $0
+echo "Positional argument no. 2: $2"                       # $2
+echo "Total number of arguments: $#"                       # $#
+echo "Values of all the arguments: $@"                     # $@
+echo "Process ID (PID) of the current shell: $$"           # $$
+echo "Exit status of the last executed command: $?"        # $?
+echo "PID of the last executed command: $!"                # $!
+$_
+
+
+file=("f1" "f2" "f3.txt" "4")      # an array
+$ echo ${files[0]}                 # echoing first element
+$ echo ${files[*]}                 # echoing all elements
+$ echo ${#files[@]}                # size of the array
+files[0]="a.txt"                   # update
+distros=("Ubuntu" "Fedora")
+distros+=("Kali")                  # appending operator
+num=(1 2 3 4 5)
+unset num[2]                       # delete
+user=("john" 23 "sudo" 0.5)
+unset user                         # delete array
+
+
+#!/bin/bash
+my_string="Ubuntu;Linux Mint;Debian;Arch;Fedora"
+# tr - translate; it'll retain space delimiter for array
+my_array=($(echo $my_string | tr ";" "\n"))
+# IFS - Internal Field Separator (delimiter); an alternative:
+# IFS=';' read -ra my_array << "$my_array"
+for i in "${my_array[@]}"
+do
+    echo $i
+done
+
+
+# BASH arithmetic operators:
+# +            addition
+# -            subtraction
+# *            multiplication
+# /            integer division (DIV)
+# %            remainder, modulo (MOD)
+# **           power, exponentiation
+
+
+#!/bin/bash
+fs1=$(du -b $1 | cut -f1)          # pipe redirection
+fs2=$(du -b $2 | cut -f1)
+echo "File size of $1 is: $fs1"
+echo "File size of $2 is: $fs2"
+total=$(($fs1 + $fs2))             # $((arithmetic_operation))
+echo "Total size is: $total"
+$ ./addition.sh /etc/passwd /etc/group
+
+
+#!/bin/bash
+GIGA=$1
+MEGA=$(($GIGA * 1024))
+KILO=$(($GIGA * 1024 * 1024))      # $MEGA * 1024
+BYTES=$(($KILO * 1024))
+echo "MB: $MEGA"
+echo "KB: $KILO"
+echo "B: $BYTES"
+
+
+div=$((20/4))                      # 5
+div=$((5/2))                       # 2
+div=$((echo "5/2" | bc -l))        # 2.50000000000000000000
+div=$((echo "scale=1; 5/2" | bc))  # 2.5
+div=$((bc <<< 'scale=2; 5/2'))     # 2.50
+div=$((bc -l <<< 's(pi+0.01)'))    # .00999983333416666468
+# bc::s() is sine() function
+# <<< is a Here String; bash-specific redirection operator; 
+# 3-angle-brackets redirection is supported by bash, ksh, zsh; not by sh (dash)
+
+
+#!/bin/bash
+C=$1
+F=$(echo "scale=2; $C*(9/5)+32 | bc -l")
+echo "Celsius: $C; Fahrenheit: $F"
+
+
+distro="Ubuntu"
+echo ${#distro}                    # string length
+str1="hand"
+str2="book"
+str3=$str1$str2                    # string concatenation
+str="Bash is Cool"
+$ word="Cool"
+$ expr index "$str" "$word"        # substring index
+$ 9
+foss="Fedora is a free operating system"
+$ echo ${foss:0:6}                 # substring extraction
+$ Fedora
+$ echo {foss/Fedora/Ubuntu}        # substring replacement
+$ Ubuntu is a free OS
+fact="Sun is a big star"
+$ echo ${fact/big}                 # substring deletion
+$ Sun is a star
+cell="112-358-1321"
+$ echo ${cell/-}                   # deleting first occurrence
+$ 112358-1321
+cell=${cell//-}                    # deleting all occurrences
+$ echo $cell
+$ 1123581321
+legend="john nash"
+$ echo ${legend^^}                 # uppercase
+$ JOHN NASH
+$ echo ${legend^}                  # capitalize
+$ John nash
+actor="JULIA ROBERTS"
+$ echo ${actor,,}                  # lowercase
+$ julia roberts
+$ echo ${actor,}                   # first letter to lowercase
+$ jULIA ROBERTS
+
+
+#! /bin/bash
+TEMP=$1
+if [ $TEMP -gt 5 ]; then           # if [ condition ]
+  if [ $TEMP -lt 15 ]; then        # then
+      echo "The weather is cold."  #   block of code...
+  elif [ $TEMP -lt 25 ]; then      # fi
+      echo "The weather is nice."
+  else                             # whitespaces surrounding condition
+      echo "The weather is hot."   # are compulsory as well as for
+  fi                               # conditional operator
+else
+  echo "It's freezing outside..."
+fi
+
+
+if [ $(whoami) = 'root' ]; then echo "root"; else echo "not root"; fi
+
+
+                                   # comparison operators
+if [ $int -eq 200 ]                # is equal to
+if [ $int -ne 1 ]                  # is not equal
+if [ $int -gt 15 ]                 # is greater than
+if [ $int -ge 10 ]                 # is greater than or equal to
+if [ $int -lt 5 ]                  # is less than
+if [ $int -le 0 ]                  # is less than or equal to
+if (( $int1 == $int2 ))            # is equal to
+if (( $int1 != $int2 ))            # is not equal to
+if (( $int1 < $int2 ))             # is less than
+if (( $int1 <= $int2 ))            # is less than or equal to
+if (( $int1 > $int2 ))             # is greater than
+if (( $int1 >= $int2 ))            # is greater than or equal to
+if [ "$str1" = "$str2" ]           # is equal to; for test command
+if [ "$str1" == "$str2" ]          # is equal to
+if [ "$str1" != "$str2" ]          # is not equal to
+if [ "$str1" > "$str2" ]           # is greater than; ASCII ordering
+if [[ "$str1" > "$str2" ]]         # is greater than; lexicographically using locale
+if [ "$str1" >= "$str2" ]          # is greater than or equal to
+if [ "$str1" < "$str2" ]           # is less than
+if [ "$str1" <= "$str2" ]          # is less than or equal to
+if [ -n "$str" ]                   # is not null; non-empty string
+if [ $str ]                        # ditto
+if [ -z "$str" ]                   # is null; zero-length string, empty string
+if [ -e $file ]                    # is file existing
+if [ -d $file ]                    # exists and is a directory
+if [ -f $file ]                    # exists and is a regular file
+if [ -L $file ]                    # exists and is a soft link
+if [ -b $file ]                    # exists and is a block special
+if [ -c $file ]                    # exists and is character special
+if [ -g $file ]                    # exists and is set-group-ID
+if [ -u $file ]                    # exists and its set-user-ID bit is set
+if [ -G $file ]                    # exists and is owned by the effective group ID
+if [ -h $file ]                    # exists and is a symbolic link
+if [ -k $file ]                    # exists and has its sticky bit set
+if [ -O $file ]                    # exists and is owned by the effective user ID
+if [ -p $file ]                    # exists and is a named pipe (FIFO)
+if [ -r $file ]                    # exists and read permission is granted
+if [ -w $file ]                    # exists and write permission is granted
+if [ -x $file ]                    # exists and execute/search permission is granted
+if [ -s $file ]                    # exists and has a size greater than zero
+if [ -S $file ]                    # exists and is a socket
+if [ -t $file_descriptor ]         # exists and is opened on a terminal
+if [ $expr ]                       # expression is true
+if [ ! $expr ]                     # expression is false
+if [ $expr1 -a $expr2 ]            # both expressions are true; AND
+if [ $expr1 -o $expr2 ]            # at least one of the expressions is true; OR
+if [ $file1 -ef $file2 ]           # both files have the same device and i-nodes
+if [ $file1 -nt $file2 ]           # file1 is newer than file2; modification date
+if [ $file1 -ot $file2 ]           # file1 is older than file2
+man test                           # check file types and compare values
+
+
+#!/bin/bash
+case $1 in                         # case $variable in
+[a-z])                             # "regular expression" )
+echo "Small Alphabet." ;;          # command;;
+[A-Z])
+echo "Big Alphabet." ;;
+[0-9])
+echo "Number." ;;
+*)                                 # default case
+echo "Special Character."
+esac
+
+
+for ((i=0; i<10; i++)); do         # for ((initialize ; condition ; increment)); do; done;
+    echo "Hello World!"            # C-styled for loop
+done
+
+
+for i in {1..10}; do               # ranged-for loop
+    echo "Hello, friend."
+done
+
+
+for i in /var/*; do                # for item in [LIST]; do; done
+    echo $i                        # listed-for loop
+done
+
+
+for ((i=1; i<=10; i++)); do
+    echo $i
+    if [ $i -eq 3 ]; then
+        break                      # structured break
+    fi
+done
+
+
+for ((i=0; i<=10; i++)); do
+    if [ $(($i % 2)) -ne 1 ]; then
+        continue                   # structured continue
+    fi
+    echo $i
+done
+
+
+for ((;;)); do                     # infinite for loop
+done
+
+
+#!/bin/bash
+num=1
+while [ $num -le 10 ]; do          # while [ condition is TRUE ]; do; done
+    echo $(($num * 3))
+    num=$(($num+1))
+done
+
+
+#!/bin/bash
+num=1
+until [ $num -gt 10 ]; do          # until [ condition is FALSE ]; do; done
+    echo $(($num * 3))
+    num=$(($num + 1))
+done
+
+
+while [ true ]; do                 # infinite while loop
+done
+
+
+function_name() {                  # function definition, new style
+    true                           # must precede any calls to the function
+}
+
+
+function_name {                    # function definition, old style
+    return 0
+}
+
+
+hello () {
+    echo "Hello World"
+}
+hello                              # function call
+
+
+error () {
+    blabla                         # 'blabla: command not found'
+    return 0                       # only integers 1-255; exit status 0 goes to #?
+                                   # 0 is a success, non-zero is a failure
+                                   # if return is not present, status is the last statement execution
+                                   # immediately terminates a function
+}
+error
+echo "Status: $?"
+
+
+#!/bin/bash
+fun () {
+    echo "$1"                      # Yes
+    echo "$2"                      # 7
+}
+echo "$1"                          # Cool
+echo "$2"                          # Stuff
+fun Yes 7                          # bash function arguments
+./fun.sh Cool Stuff                # bash script arguments
+
+
+#!/bin/bash
+v1='A'
+v2='B'
+myfun() {
+    local v1='C'                   # local variable v1
+    v2='D'                         # global variable v2
+    echo "$v1 $v2"
+}
+echo "$v1 $v2"                     # A B
+myfun                              # C D
+echo "$v1 $v2"                     # A D
+
+
+#!/bin/bash
+factorial () {
+    if [ $1 -le 1 ]; then                        # base case
+        echo 1
+    else
+        last=$(factorial $(( $1 - 1 )) )         # recursive case
+        echo $(( $1 * last ))
+    fi
+}
+echo -n "4! is: "
+factorial 4
+
+
+function myfunc() {
+    local myresult='some value'
+    echo "$myresult"
+}
+result=$(myfunc)                                 # command substitution as return value
+echo $result
+
+
+function myfunc() {
+    local __resultvar=$1
+    local myresult='some value'
+    eval $__resultvar="'$myresult'"              # reinterpret as result='some value'
+}
+myfunc result
+echo $result
+
+
+function myfunc() {
+    local __resultvar=$1
+    local myresult='some value'                  # a place for a usual function body
+    if [[ "$__resultvar" ]]; then
+        eval $__resultvar="'$myresult'"          # result='some value'
+    else
+        echo "$myresult"                         # stdout: some value
+    fi
+}
+myfunc result                                    # returning by (global) value name
+result2=$(myfunc)                                # returning by command substitution
+echo $result
+echo $result2
+
+
+./script                                         # running in a subshell
+                                                 # cannot access local variables
+. script                                         # dot command
+
+
+/// statement: case
+case "${1}" in
+	  "")    echo "No option was specified."; exit 1 ;;
+      square)    echo "You specified 'square'."          ;;
+      circle)    echo "You specified 'circle'."          ;;
+    triangle)    echo "You specified 'triangle'."        ;;
+           *)    echo "Unknown shape '${1}'.";    exit 1 ;;
+esac
+
+case expression in
+    pattern1 | pattern2 | pattern3) 
+    statements ;;
+    *)
+    statements ;;
+esac
+%%
+
+
+/// string: concatenation
+str="iron"
+str+="man"
+echo $str                                        # "ironman"
+
+
+var=""
+for color in 'Black' 'White' 'Brown'; do
+    var+="${color} "
+done
+echo "$var"                                      # "Black White Brown"
+%%
+
+
+/// string: is it contains a substring?
+fullstring="This is a string with a stretch"
+substr="stretch"
+if [[ $fullstring == *"$substr"* ]]; then
+    echo "found!"
+fi
+
+
+if grep -q "$substr" <<< "$fullstring"; then 
+    echo "Found"; 
+fi
+%%
+
+
+/// variables: some variable expansions
+name="Linux Handbook"
+echo "Hello $name!"                              # "Hello Linux Handbook!"
+
+name=("Linux Handbook" "It's FOSS")
+echo "Hello ${name}!"                            # "Hello Linux Handbook It's FOSS"
+echo "Hello ${name[1]}!"                         # "Hello It's FOSS"
+
+echo "Hello ${name:-nobody}!"                    # defaulting to 'nobody' if 'name' is not set
+echo "Hello ${name:+person}!"                    # return 'person', do not alters 'name'
+
+name="Linux Handbook"
+variable="name"                                  # indirect substitution (reference)
+echo "Hello ${!variable}!"                       # "Hello Linux Handbook"
+
+variable="name"
+echo "Length is ${#variable}."                   # "Length is 4."
+variable=("name" "word")
+echo "Length is ${#variable}."                   # "Length is 2."
+
+variable="name"
+echo "${variable^}"                              # "Name" — first letter uppercase
+variable="name"
+echo "${variable^^}"
+variable="WIDEname"                              # "NAME" — all uppercase
+echo "${variable,}"                              # "wIDEname" — first letter lowercase
+variable="WIDEname"
+echo "${variable,,}"                             # "widename" — all lowercase
+
+SITE_NAME="OSTechnix"
+echo ${SITE_NAME:2}                              # "Technix" — {string:start:length}
+echo ${SITE_NAME:2:2}                            # "Te" — string slicing
+
+echo ${MESSAGE/linux/LINUX}                      # ${string:search:replace} — first occurrence
+echo ${MESSAGE//linux/LINUX}                     # all occurrences
+
+SITE_NAME="www.ostechnix.com"
+echo ${SITE_NAME%.*}                             # "www.ostechnix" — remove a substring (last)
+echo ${SITE_NAME%%.*}                            # "www" — first occurence
+echo ${SITE_NAME#*.}                             # "ostechnix.com" — inverse delete (first)
+echo ${SITE_NAME##*.}                            # "com" — last occurrence
+%%
+
+
+/// string: replace a substring with another string
+line="I am writing a line today"                 # ${main_string/search_term/replace_term}
+echo "${line/today/now}"                         # "I am writing a line now"
+
+replace="now"
+replacewith="today"
+line="${line/${replace}/${replacewith}}"         # it replaces only the first occurence
+echo $line                                       # "I am writing a line today"
+
+hbday="Happy Birthday! Many Many Happy Returns!"
+hbday="${hbday//Many/So Many}"                   # it replaces all occurences
+echo $hbday                                      # "Happy Birthday! So Many So Many Happy Returns!"
+
+
+line=$(sed "s/$replace/s//$replacewith/" <<< "$line")                # first occurence of
+line=$(sed "s/$replace/$replacewith/g" <<< "$line")                  # all occurences
+sed -i 's/$replace/$replacewith/' filename                           # works for files
+%%
+
+
+/// bash-environment: rarely known commands
+#!/usr/bin/env bash
+read -p "What is your name? " name               # input from the user
+echo "Your name is ${name}!"
+
+#!/usr/bin/env bash
+mapfile -t file_var < file.txt                   # read files content into a variable
+for i in "${file_var[@]}"; do
+    echo "${i}"
+done
+
+domain=linuxhandbook.com
+source config.sh                                 # put a variable into shell environment
+echo "${domain}"
+%%
+
+
+/// data types: an associate array (a dictionary)
+%%
+
+
+/// string: slicing
+s="Info.out.2014-02-08:INFO|SID:sXfzRjbmKbwX7jyaW1sog7n|Browser[Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0]"
+search=Browser[
+browser="${s#*$search}"
+browser="${browser%%]*}"
+echo "$browser"
+# "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0"
+%%
+
+
+/// string: index (string/character position)
+# http://mywiki.wooledge.org/BashFAQ/073
+
+s="Info.out.2014-02-08:INFO|SID:sXfzRjbmKbwX7jyaW1sog7n|Browser[Mozilla/5.0 (Windows NT 6.1; WOW64; rv:26.0) Gecko/20100101 Firefox/26.0]"
+prefix=${s%%Mozilla*}
+index=${#prefix}
+echo "$index"
+# "61"
+
+echo `expr index "abcdefghijklmnopqrstuvwxyz" xyzd`
+echo "$s" | grep -o -b Mozilla
+
+echo "RAMSITALSKHMAN|1223333" | grep -aob '|'                        # "14:|"
+echo "RAMSITALSKHMAN|1223333" | grep -aob '|' | grep -oE '[0-9]+'    # "14"
+%%
+
+
+/// bash-environment: data dump at pressing CTRL+C
+trap ctrl_c INT
+
+ctrl_c() {
+    echo "$hashes" > hashes.txt
+    exit 0
+}
+%%
+
+
+/// string: extract substring by index position
+echo "123456" | cut -c2-4                                  # "234" asas
+echo "123456" | cut -c1,3,6                                # "136"
+echo "123456" | cut -c1-3,6                                # "1236"
+
+echo "12345678" | awk '{print substr($0, 3, 2);}'          # "34"
+
+k=3
+echo '123456789' | sed 's/^.\{'$k'\}//'                    # "456789"
+%%
+
+
+/// string: grep match position and line
+awk -v s="needle" 'i=index($0, s) {print NR, i}' file
+awk 'FNR==NR{a[$0];next} {for (i in a) {if (p=index($0, i)) print i ":" NR "," p} }' patterns searches
+%%
+
+
+/// functions: exit codes
+function funWithLocalAndAssignmentTogether() {
+    local output="$(echo "Doing some stuff.";exit 1)"
+    local exitCode=$?
+    echo "output: $output"
+    echo "exitCode: $exitCode"
+}
+
+function funWithLocalAndAssignmentSeparate() {
+    local output
+    output="$(echo "Doing some stuff.";exit 1)"
+    local exitCode=$?
+    echo "output: $output"
+    echo "exitCode: $exitCode"
+}
+
+funWithLocalAndAssignmentTogether
+funWithLocalAndAssignmentSeparate
+
+# "output: Doing some stuff." && "exitCode: 0"
+# "output: Doing some stuff." && "exitCode: 1"
+%%
+
+
+
